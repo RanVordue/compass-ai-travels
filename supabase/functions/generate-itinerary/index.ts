@@ -171,6 +171,14 @@ Make sure the itinerary is realistic, well-researched, and tailored to the speci
         cleanedContent = cleanedContent.replace(/^```\n?/, '').replace(/\n?```$/, '');
       }
       
+      // Fix common JSON syntax errors
+      cleanedContent = cleanedContent
+        .replace(/"\s*\n\s*"/g, '",\n"') // Add missing commas between properties
+        .replace(/}\s*\n\s*"/g, '},\n"') // Add missing commas after objects
+        .replace(/]\s*\n\s*"/g, '],\n"') // Add missing commas after arrays
+        .replace(/,\s*}/g, '}') // Remove trailing commas before closing braces
+        .replace(/,\s*]/g, ']'); // Remove trailing commas before closing brackets
+      
       itinerary = JSON.parse(cleanedContent);
     } catch (parseError) {
       console.error('Failed to parse OpenAI response as JSON:', parseError);
