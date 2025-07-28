@@ -7,6 +7,7 @@ import { ArrowLeft, MapPin, Clock, DollarSign, Calendar, Download, Edit, AlertCi
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import jsPDF from 'jspdf';
 
 interface ItineraryDisplayProps {
   travelData: any;
@@ -18,6 +19,156 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
   const [itinerary, setItinerary] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const downloadPDF = () => {
+    if (!itinerary) return;
+
+    const pdf = new jsPDF();
+    let yPosition = 20;
+    const margin = 20;
+    const pageWidth = pdf.internal.pageSize.width;
+    const lineHeight = 7;
+    
+    // Helper function to add text with wrapping and page breaks
+    const addText = (text: string, fontSize: number = 10, isBold: boolean = false) => {
+      pdf.setFontSize(fontSize);
+      pdf.setFont('helvetica', isBold ? 'bold' : 'normal');
+      
+      const maxWidth = pageWidth - (margin * 2);
+      const lines = pdf.splitTextToSize(text, maxWidth);
+      
+      lines.forEach((line: string) => {
+        if (yPosition > pdf.internal.pageSize.height - 30) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        pdf.text(line, margin, yPosition);
+        yPosition += lineHeight;
+      });
+      
+      return yPosition;
+    };
+
+    // Add title
+    yPosition = addText(`${itinerary.destination} Travel Itinerary`, 18, true);
+    yPosition += 5;
+    addText(`${itinerary.duration} days of unforgettable experiences`, 12);
+    yPosition += 10;
+
+    // Add summary if available
+    if (itinerary.summary) {
+      addText(itinerary.summary, 10);
+      yPosition += 10;
+    }
+
+    // Add overview
+    addText(`Duration: ${itinerary.duration} Days`, 10, true);
+    addText(`Total Budget: ${itinerary.totalBudget}`, 10, true);
+    addText(`Group Size: ${travelData.groupSize.replace('-', ' ')}`, 10, true);
+    yPosition += 10;
+
+    // Add daily itinerary
+    itinerary.days?.forEach((day: any) => {
+      yPosition = addText(`Day ${day.day} - ${day.theme}`, 14, true);
+      if (day.date) {
+        addText(`Date: ${day.date}`, 10);
+      }
+      yPosition += 5;
+
+      // Activities
+      if (day.activities?.length) {
+        addText('Daily Schedule:', 12, true);
+        day.activities.forEach((activity: any) => {
+          addText(`${activity.time} - ${activity.name}`, 10, true);
+          if (activity.description) {
+            addText(`  ${activity.description}`, 9);
+          }
+          if (activity.duration) {
+            addText(`  Duration: ${activity.duration}`, 9);
+          }
+          if (activity.cost) {
+            addText(`  Cost: ${activity.cost}`, 9);
+          }
+          if (activity.location) {
+            addText(`  Location: ${activity.location}`, 9);
+          }
+          if (activity.tips) {
+            addText(`  Tip: ${activity.tips}`, 9);
+          }
+          yPosition += 3;
+        });
+      }
+
+      // Meals
+      if (day.meals?.length) {
+        yPosition += 3;
+        addText('Meal Recommendations:', 12, true);
+        day.meals.forEach((meal: any) => {
+          addText(`${meal.meal}: ${meal.restaurant || meal.suggestion}`, 10, true);
+          if (meal.cuisine) {
+            addText(`  Cuisine: ${meal.cuisine}`, 9);
+          }
+          if (meal.description) {
+            addText(`  ${meal.description}`, 9);
+          }
+          if (meal.cost) {
+            addText(`  Cost: ${meal.cost}`, 9);
+          }
+        });
+      }
+
+      // Transportation
+      if (day.transportation) {
+        yPosition += 3;
+        addText('Transportation:', 12, true);
+        addText(day.transportation, 10);
+      }
+
+      // Daily cost
+      if (day.estimatedCost) {
+        yPosition += 3;
+        addText(`Estimated Daily Cost: ${day.estimatedCost}`, 11, true);
+      }
+
+      yPosition += 15; // Space between days
+    });
+
+    // Add additional information
+    if (itinerary.packingList?.length) {
+      yPosition += 5;
+      addText('Packing List:', 14, true);
+      itinerary.packingList.forEach((item: string) => {
+        addText(`• ${item}`, 10);
+      });
+      yPosition += 10;
+    }
+
+    if (itinerary.localTips?.length) {
+      yPosition += 5;
+      addText('Local Tips:', 14, true);
+      itinerary.localTips.forEach((tip: string) => {
+        addText(`• ${tip}`, 10);
+      });
+      yPosition += 10;
+    }
+
+    if (itinerary.budgetBreakdown) {
+      yPosition += 5;
+      addText('Budget Breakdown:', 14, true);
+      Object.entries(itinerary.budgetBreakdown).forEach(([category, cost]) => {
+        addText(`${category}: ${cost}`, 10);
+      });
+    }
+
+    // Save the PDF
+    const fileName = `${itinerary.destination.replace(/\s+/g, '_')}_Itinerary.pdf`;
+    pdf.save(fileName);
+    
+    toast({
+      title: "PDF Downloaded!",
+      description: "Your itinerary has been saved as a PDF.",
+    });
+  };
 
   useEffect(() => {
     const generateItinerary = async () => {
@@ -176,7 +327,7 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
               <Edit className="w-4 h-4" />
               <span>Edit Itinerary</span>
             </Button>
-            <Button className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-700">
+            <Button onClick={downloadPDF} className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-700">
               <Download className="w-4 h-4" />
               <span>Download PDF</span>
             </Button>
@@ -384,7 +535,7 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
               Your personalized itinerary is ready! Download it, share it with travel companions, or make adjustments to fit your style.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-50">
+              <Button onClick={downloadPDF} size="lg" className="bg-white text-blue-600 hover:bg-gray-50">
                 Download Full Itinerary
               </Button>
               <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
