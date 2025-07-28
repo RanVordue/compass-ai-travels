@@ -9,6 +9,60 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper function to wait for a specified time
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Helper function to make OpenAI API call with retry logic
+const makeOpenAIRequest = async (body: any, retries = 3): Promise<any> => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (response.ok) {
+        return await response.json();
+      }
+
+      // Handle specific error codes
+      if (response.status === 429) {
+        console.log(`Rate limit hit, attempt ${attempt}/${retries}`);
+        if (attempt < retries) {
+          // Wait with exponential backoff: 2^attempt seconds
+          const waitTime = Math.pow(2, attempt) * 1000;
+          console.log(`Waiting ${waitTime}ms before retry...`);
+          await sleep(waitTime);
+          continue;
+        }
+        throw new Error(`Rate limit exceeded. Please try again in a few minutes.`);
+      }
+
+      if (response.status === 401) {
+        throw new Error('Invalid OpenAI API key. Please check your API key configuration.');
+      }
+
+      if (response.status === 500) {
+        throw new Error('OpenAI service is temporarily unavailable. Please try again later.');
+      }
+
+      // For other errors, throw with status code
+      throw new Error(`OpenAI API error: ${response.status} - ${response.statusText}`);
+
+    } catch (error) {
+      if (attempt === retries) {
+        throw error;
+      }
+      console.log(`Attempt ${attempt} failed:`, error.message);
+      await sleep(1000 * attempt); // Wait before retry
+    }
+  }
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -28,8 +82,7 @@ Travel Dates: ${travelData.startDate} to ${travelData.endDate}
 Group Size: ${travelData.groupSize}
 Budget Level: ${travelData.budget}
 Interests: ${travelData.interests.join(', ')}
-Travel Style: ${travelData.travelStyle}
-Transportation: ${travelData.transportation}
+Travel Style: ${travelData.pace}
 Accommodation: ${travelData.accommodation}
 
 Please create a comprehensive day-by-day itinerary that includes:
@@ -88,34 +141,24 @@ Format the response as a JSON object with the following structure:
 
 Make sure the itinerary is realistic, well-researched, and tailored to the specified budget and interests.`;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { 
-            role: 'system', 
-            content: 'You are an expert travel planner with extensive knowledge of destinations worldwide. Create detailed, practical, and budget-conscious travel itineraries. Always respond with valid JSON format.' 
-          },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 4000,
-      }),
-    });
+    // Use the updated GPT model and make the request with retry logic
+    const requestBody = {
+      model: 'gpt-4o-mini',
+      messages: [
+        { 
+          role: 'system', 
+          content: 'You are an expert travel planner with extensive knowledge of destinations worldwide. Create detailed, practical, and budget-conscious travel itineraries. Always respond with valid JSON format.' 
+        },
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 4000,
+    };
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
-    }
-
-    const data = await response.json();
+    const data = await makeOpenAIRequest(requestBody);
     const generatedContent = data.choices[0].message.content;
     
-    console.log('OpenAI response:', generatedContent);
+    console.log('OpenAI response received successfully');
 
     // Try to parse the JSON response
     let itinerary;
@@ -139,11 +182,27 @@ Make sure the itinerary is realistic, well-researched, and tailored to the speci
 
   } catch (error) {
     console.error('Error in generate-itinerary function:', error);
+    
+    // Return more specific error messages to help users understand what went wrong
+    let errorMessage = 'Failed to generate itinerary';
+    let statusCode = 500;
+    
+    if (error.message.includes('Rate limit exceeded')) {
+      errorMessage = 'OpenAI API rate limit exceeded. Please wait a few minutes and try again.';
+      statusCode = 429;
+    } else if (error.message.includes('Invalid OpenAI API key')) {
+      errorMessage = 'Invalid OpenAI API key. Please check your configuration.';
+      statusCode = 401;
+    } else if (error.message.includes('OpenAI service is temporarily unavailable')) {
+      errorMessage = 'OpenAI service is temporarily unavailable. Please try again later.';
+      statusCode = 503;
+    }
+    
     return new Response(JSON.stringify({ 
-      error: error.message,
-      details: 'Failed to generate itinerary'
+      error: errorMessage,
+      details: error.message
     }), {
-      status: 500,
+      status: statusCode,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
