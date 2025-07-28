@@ -163,9 +163,18 @@ Make sure the itinerary is realistic, well-researched, and tailored to the speci
     // Try to parse the JSON response
     let itinerary;
     try {
-      itinerary = JSON.parse(generatedContent);
+      // Clean the response by removing markdown code blocks if present
+      let cleanedContent = generatedContent.trim();
+      if (cleanedContent.startsWith('```json')) {
+        cleanedContent = cleanedContent.replace(/^```json\n?/, '').replace(/\n?```$/, '');
+      } else if (cleanedContent.startsWith('```')) {
+        cleanedContent = cleanedContent.replace(/^```\n?/, '').replace(/\n?```$/, '');
+      }
+      
+      itinerary = JSON.parse(cleanedContent);
     } catch (parseError) {
       console.error('Failed to parse OpenAI response as JSON:', parseError);
+      console.error('Raw response:', generatedContent);
       // If JSON parsing fails, return a structured error response
       return new Response(JSON.stringify({ 
         error: 'Failed to generate proper itinerary format',
