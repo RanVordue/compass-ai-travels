@@ -3,8 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MapPin, Clock, DollarSign, Calendar, Download, Edit } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, DollarSign, Calendar, Download, Edit, AlertCircle } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ItineraryDisplayProps {
   travelData: any;
@@ -14,106 +16,55 @@ interface ItineraryDisplayProps {
 const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [itinerary, setItinerary] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  // Simulate AI generation process
   useEffect(() => {
     const generateItinerary = async () => {
       setIsLoading(true);
+      setError(null);
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // Mock itinerary data based on user input
-      const mockItinerary = {
-        destination: travelData.destination,
-        duration: calculateDays(travelData.startDate, travelData.endDate),
-        totalBudget: getTotalBudget(travelData.budget),
-        days: generateMockDays(travelData)
-      };
-      
-      setItinerary(mockItinerary);
-      setIsLoading(false);
+      try {
+        console.log('Generating itinerary with data:', travelData);
+        
+        const { data, error } = await supabase.functions.invoke('generate-itinerary', {
+          body: { travelData }
+        });
+
+        if (error) {
+          console.error('Supabase function error:', error);
+          throw new Error(error.message || 'Failed to generate itinerary');
+        }
+
+        if (data.error) {
+          console.error('OpenAI API error:', data.error);
+          throw new Error(data.error);
+        }
+
+        console.log('Generated itinerary:', data.itinerary);
+        setItinerary(data.itinerary);
+        
+        toast({
+          title: "Itinerary Generated!",
+          description: "Your personalized travel plan is ready.",
+        });
+
+      } catch (err) {
+        console.error('Error generating itinerary:', err);
+        setError(err instanceof Error ? err.message : 'Failed to generate itinerary');
+        
+        toast({
+          title: "Generation Failed",
+          description: "Unable to create your itinerary. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     generateItinerary();
-  }, [travelData]);
-
-  const calculateDays = (start: string, end: string) => {
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  };
-
-  const getTotalBudget = (budgetLevel: string) => {
-    const budgetMap = {
-      'budget': '$500-800',
-      'mid-range': '$1,200-2,000',
-      'luxury': '$3,000-5,000'
-    };
-    return budgetMap[budgetLevel as keyof typeof budgetMap] || '$1,000-1,500';
-  };
-
-  const generateMockDays = (data: any) => {
-    const days = [];
-    const duration = calculateDays(data.startDate, data.endDate);
-    
-    for (let i = 1; i <= Math.min(duration, 7); i++) {
-      days.push({
-        day: i,
-        date: getDateString(data.startDate, i - 1),
-        theme: getThemeForDay(i, data.interests),
-        activities: getMockActivities(i, data.interests, data.budget),
-        meals: getMockMeals(data.budget),
-        estimatedCost: getDailyCost(data.budget)
-      });
-    }
-    
-    return days;
-  };
-
-  const getDateString = (startDate: string, daysToAdd: number) => {
-    const date = new Date(startDate);
-    date.setDate(date.getDate() + daysToAdd);
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-  };
-
-  const getThemeForDay = (day: number, interests: string[]) => {
-    const themes = interests.length > 0 ? interests : ['Exploration', 'Culture', 'Food'];
-    return themes[(day - 1) % themes.length];
-  };
-
-  const getMockActivities = (day: number, interests: string[], budget: string) => {
-    const baseActivities = [
-      { name: 'Morning city walk', time: '9:00 AM', duration: '2 hours', cost: '$0' },
-      { name: 'Visit main attraction', time: '11:30 AM', duration: '3 hours', cost: '$25' },
-      { name: 'Afternoon exploration', time: '3:00 PM', duration: '2 hours', cost: '$15' },
-      { name: 'Evening experience', time: '7:00 PM', duration: '2 hours', cost: '$40' }
-    ];
-    
-    return baseActivities;
-  };
-
-  const getMockMeals = (budget: string) => {
-    return [
-      { meal: 'Breakfast', suggestion: 'Local café with pastries', cost: '$12' },
-      { meal: 'Lunch', suggestion: 'Traditional restaurant', cost: '$25' },
-      { meal: 'Dinner', suggestion: 'Recommended local cuisine', cost: '$45' }
-    ];
-  };
-
-  const getDailyCost = (budget: string) => {
-    const costMap = {
-      'budget': '$80-120',
-      'mid-range': '$150-250',
-      'luxury': '$400-600'
-    };
-    return costMap[budget as keyof typeof costMap] || '$150-200';
-  };
+  }, [travelData, toast]);
 
   if (isLoading) {
     return (
@@ -153,6 +104,60 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <Button
+              variant="outline"
+              onClick={onBack}
+              className="mb-8 flex items-center space-x-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Planning</span>
+            </Button>
+            
+            <Card className="shadow-lg border-0">
+              <CardContent className="p-8">
+                <div className="flex items-center justify-center mb-4">
+                  <AlertCircle className="w-12 h-12 text-red-500" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                  Oops! Something went wrong
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  We encountered an error while generating your itinerary: {error}
+                </p>
+                <Button onClick={() => window.location.reload()} className="bg-blue-600 hover:bg-blue-700">
+                  Try Again
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!itinerary) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <Button
+            variant="outline"
+            onClick={onBack}
+            className="mb-8 flex items-center space-x-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Planning</span>
+          </Button>
+          <p className="text-gray-600">No itinerary data available.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -187,6 +192,11 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
             <CardDescription className="text-lg mt-4">
               {itinerary.duration} days of unforgettable experiences
             </CardDescription>
+            {itinerary.summary && (
+              <p className="text-gray-600 mt-2 max-w-2xl mx-auto">
+                {itinerary.summary}
+              </p>
+            )}
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-3 gap-6 text-center">
@@ -196,7 +206,7 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
               </div>
               <div className="flex items-center justify-center space-x-2">
                 <DollarSign className="w-5 h-5 text-green-600" />
-                <span className="font-medium">Est. {itinerary.totalBudget}</span>
+                <span className="font-medium">{itinerary.totalBudget}</span>
               </div>
               <div className="flex items-center justify-center space-x-2">
                 <MapPin className="w-5 h-5 text-orange-600" />
@@ -208,7 +218,7 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
 
         {/* Daily Itinerary */}
         <div className="space-y-8">
-          {itinerary.days.map((day: any, index: number) => (
+          {itinerary.days?.map((day: any, index: number) => (
             <Card key={day.day} className="shadow-lg border-0 overflow-hidden">
               <CardHeader className="bg-gradient-to-r from-blue-600 to-orange-600 text-white">
                 <CardTitle className="flex items-center justify-between">
@@ -235,17 +245,24 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
                       <span>Daily Schedule</span>
                     </h4>
                     <div className="space-y-4">
-                      {day.activities.map((activity: any, idx: number) => (
+                      {day.activities?.map((activity: any, idx: number) => (
                         <div key={idx} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
                           <div className="text-sm text-gray-600 font-medium min-w-[80px]">
                             {activity.time}
                           </div>
                           <div className="flex-1">
                             <h5 className="font-medium text-gray-900">{activity.name}</h5>
+                            {activity.description && (
+                              <p className="text-sm text-gray-600 mt-1">{activity.description}</p>
+                            )}
                             <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
                               <span>{activity.duration}</span>
                               <span className="text-green-600 font-medium">{activity.cost}</span>
+                              {activity.location && <span>📍 {activity.location}</span>}
                             </div>
+                            {activity.tips && (
+                              <p className="text-xs text-blue-600 mt-1">💡 {activity.tips}</p>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -260,11 +277,17 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
                         <span>Meal Recommendations</span>
                       </h4>
                       <div className="space-y-3">
-                        {day.meals.map((meal: any, idx: number) => (
+                        {day.meals?.map((meal: any, idx: number) => (
                           <div key={idx} className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
                             <div>
                               <h5 className="font-medium text-gray-900">{meal.meal}</h5>
-                              <p className="text-sm text-gray-600">{meal.suggestion}</p>
+                              <p className="text-sm text-gray-600">
+                                {meal.restaurant || meal.suggestion}
+                                {meal.cuisine && ` • ${meal.cuisine}`}
+                              </p>
+                              {meal.description && (
+                                <p className="text-xs text-gray-500 mt-1">{meal.description}</p>
+                              )}
                             </div>
                             <span className="text-green-600 font-medium">{meal.cost}</span>
                           </div>
@@ -278,12 +301,78 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
                         <span className="text-xl font-bold text-green-600">{day.estimatedCost}</span>
                       </div>
                     </div>
+
+                    {day.transportation && (
+                      <div className="p-4 bg-blue-50 rounded-lg">
+                        <h5 className="font-medium text-gray-900 mb-2">Transportation</h5>
+                        <p className="text-sm text-gray-600">{day.transportation}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
+
+        {/* Additional Information */}
+        {(itinerary.packingList || itinerary.localTips || itinerary.budgetBreakdown) && (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+            {itinerary.packingList && (
+              <Card className="shadow-lg border-0">
+                <CardHeader>
+                  <CardTitle className="text-lg">🎒 Packing List</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2">
+                    {itinerary.packingList.map((item: string, idx: number) => (
+                      <li key={idx} className="text-sm text-gray-600 flex items-center space-x-2">
+                        <span>•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
+
+            {itinerary.localTips && (
+              <Card className="shadow-lg border-0">
+                <CardHeader>
+                  <CardTitle className="text-lg">💡 Local Tips</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2">
+                    {itinerary.localTips.map((tip: string, idx: number) => (
+                      <li key={idx} className="text-sm text-gray-600 flex items-start space-x-2">
+                        <span>•</span>
+                        <span>{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
+
+            {itinerary.budgetBreakdown && (
+              <Card className="shadow-lg border-0">
+                <CardHeader>
+                  <CardTitle className="text-lg">💰 Budget Breakdown</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {Object.entries(itinerary.budgetBreakdown).map(([category, cost]) => (
+                      <div key={category} className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600 capitalize">{category}</span>
+                        <span className="text-sm font-medium text-green-600">{cost as string}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
 
         {/* CTA Section */}
         <Card className="shadow-lg border-0 mt-12 bg-gradient-to-r from-blue-600 to-orange-600">
