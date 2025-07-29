@@ -147,18 +147,26 @@ Make sure the itinerary is realistic, well-researched, and tailored to the speci
       messages: [
         { 
           role: 'system', 
-          content: 'You are an expert travel planner with extensive knowledge of destinations worldwide. Create detailed, practical, and budget-conscious travel itineraries. Always respond with valid JSON format.' 
+          content: 'You are an expert travel planner with extensive knowledge of destinations worldwide. Create detailed, practical, and budget-conscious travel itineraries. CRITICAL: Always respond with complete, valid JSON format. Stay within token limits by being concise if needed, but ensure the JSON structure is always complete with proper closing brackets and braces.' 
         },
         { role: 'user', content: prompt }
       ],
       temperature: 0.7,
-      max_tokens: 4000,
+      max_tokens: 8000,
     };
 
     const data = await makeOpenAIRequest(requestBody);
     const generatedContent = data.choices[0].message.content;
     
     console.log('OpenAI response received successfully');
+    console.log('Response length:', generatedContent.length);
+    console.log('Response ending:', generatedContent.slice(-100));
+
+    // Check if response was truncated
+    const wasTruncated = data.choices[0].finish_reason === 'length';
+    if (wasTruncated) {
+      console.warn('OpenAI response was truncated due to token limit');
+    }
 
     // Try to parse the JSON response
     let itinerary;
@@ -178,15 +186,37 @@ Make sure the itinerary is realistic, well-researched, and tailored to the speci
         .replace(/]\s*\n\s*"/g, '],\n"') // Add missing commas after arrays
         .replace(/,\s*}/g, '}') // Remove trailing commas before closing braces
         .replace(/,\s*]/g, ']'); // Remove trailing commas before closing brackets
+
+      // If the response was truncated and doesn't end properly, try to complete it
+      if (wasTruncated) {
+        const openBraces = (cleanedContent.match(/{/g) || []).length;
+        const closeBraces = (cleanedContent.match(/}/g) || []).length;
+        const openBrackets = (cleanedContent.match(/\[/g) || []).length;
+        const closeBrackets = (cleanedContent.match(/]/g) || []).length;
+        
+        // Add missing closing brackets and braces
+        for (let i = 0; i < (openBrackets - closeBrackets); i++) {
+          cleanedContent += ']';
+        }
+        for (let i = 0; i < (openBraces - closeBraces); i++) {
+          cleanedContent += '}';
+        }
+        
+        console.log('Attempted to complete truncated JSON');
+      }
       
       itinerary = JSON.parse(cleanedContent);
     } catch (parseError) {
       console.error('Failed to parse OpenAI response as JSON:', parseError);
-      console.error('Raw response:', generatedContent);
+      console.error('Raw response length:', generatedContent.length);
+      console.error('Was truncated:', wasTruncated);
+      console.error('Raw response ending:', generatedContent.slice(-200));
+      
       // If JSON parsing fails, return a structured error response
       return new Response(JSON.stringify({ 
-        error: 'Failed to generate proper itinerary format',
-        rawResponse: generatedContent 
+        error: 'Failed to generate proper itinerary format. The response may have been too long.',
+        details: wasTruncated ? 'Response was truncated due to length. Try a shorter trip duration.' : 'Invalid JSON format',
+        rawResponse: generatedContent.slice(0, 1000) + '...' // Only return first 1000 chars for debugging
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
