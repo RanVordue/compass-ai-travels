@@ -29,7 +29,7 @@ const makeOpenAIStreamRequest = async (body: any): Promise<ReadableStream> => {
       'Authorization': `Bearer ${openAIApiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ ...body, stream: true }),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
