@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { MapPin, Calendar, DollarSign, Heart, Clock, Users } from 'lucide-react';
 import TravelQuestionnaire from '@/components/TravelQuestionnaire';
 import ItineraryDisplay from '@/components/ItineraryDisplay';
+import Header from '@/components/Header';
 
 const Index = () => {
   const [currentStep, setCurrentStep] = useState<'welcome' | 'questionnaire' | 'itinerary'>('welcome');
@@ -47,6 +48,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
+      <Header />
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-orange-600/10"></div>
