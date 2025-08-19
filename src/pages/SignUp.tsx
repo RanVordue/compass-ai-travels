@@ -50,7 +50,7 @@ const SignUp: React.FC = () => {
     }
 
     if (!fullName.trim()) {
-      setError('Please enter your full name.');
+      setError('Please enter your name.');
       return;
     }
 
