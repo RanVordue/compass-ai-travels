@@ -3,9 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MapPin, Clock, DollarSign, Calendar, Download, Edit, AlertCircle } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, DollarSign, Calendar, Download, Edit, AlertCircle, Save } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import LoginModal from "./LoginModal";
 import { supabase } from "@/integrations/supabase/client";
 import jsPDF from 'jspdf';
 
@@ -18,7 +20,60 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
   const [isLoading, setIsLoading] = useState(true);
   const [itinerary, setItinerary] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [pendingSave, setPendingSave] = useState(false);
   const { toast } = useToast();
+  const { user, loading } = useAuth();
+
+  const saveItinerary = async () => {
+    if (!user) {
+      setShowLoginModal(true);
+      setPendingSave(true);
+      return;
+    }
+
+    if (!itinerary) return;
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('saved_itineraries')
+        .insert({
+          user_id: user.id,
+          title: `${itinerary.destination} Adventure`,
+          destination: itinerary.destination,
+          duration: itinerary.duration,
+          total_budget: itinerary.totalBudget,
+          itinerary_data: itinerary,
+          travel_data: travelData,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Itinerary Saved!",
+        description: "Your travel plan has been saved to your account.",
+      });
+    } catch (err) {
+      console.error('Error saving itinerary:', err);
+      toast({
+        title: "Save Failed",
+        description: "Unable to save your itinerary. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Auto-save after login if there's a pending save
+  useEffect(() => {
+    if (user && pendingSave && itinerary) {
+      setPendingSave(false);
+      saveItinerary();
+    }
+  }, [user, pendingSave, itinerary]);
 
   const downloadPDF = () => {
     if (!itinerary) return;
@@ -323,6 +378,14 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
             <span>Back to Planning</span>
           </Button>
           <div className="flex space-x-3">
+            <Button 
+              onClick={saveItinerary}
+              disabled={isSaving}
+              className="flex items-center space-x-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
+            >
+              <Save className="w-4 h-4" />
+              <span>{isSaving ? 'Saving...' : 'Save Itinerary'}</span>
+            </Button>
             <Button variant="outline" className="flex items-center space-x-2">
               <Edit className="w-4 h-4" />
               <span>Edit Itinerary</span>
@@ -545,6 +608,11 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
           </CardContent>
         </Card>
       </div>
+
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={() => setShowLoginModal(false)} 
+      />
     </div>
   );
 };
