@@ -207,7 +207,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
                   <Label className="text-lg font-medium">Travel pace</Label>
                   <Select value={formData.pace} onValueChange={(value) => handleInputChange('pace', value)}>
                     <SelectTrigger className="mt-2 text-lg p-4">
-                      <SelectValue placeholder="How do you like to travel?" />
+                      <SelectValue placeholder="What pace of travel do you prefer?" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="relaxed">Relaxed (2-3 activities per day)</SelectItem>
