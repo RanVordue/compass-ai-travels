@@ -92,7 +92,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
       case 2:
         return formData.interests.length > 0;
       case 3:
-        return true;
+        return formData.accommodation;
       default:
         return false;
     }
