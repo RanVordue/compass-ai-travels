@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import LoginModal from "./LoginModal";
 import { supabase } from "@/integrations/supabase/client";
 import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface ItineraryDisplayProps {
   travelData: any;
@@ -25,6 +25,7 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
   const [pendingSave, setPendingSave] = useState(false);
   const { toast } = useToast();
   const { user, loading } = useAuth();
+  const itineraryRef = useRef<HTMLDivElement>(null);
 
   const saveItinerary = async () => {
     if (!user) {
@@ -67,7 +68,6 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
     }
   };
 
-  // Auto-save after login if there's a pending save
   useEffect(() => {
     if (user && pendingSave && itinerary) {
       setPendingSave(false);
@@ -75,154 +75,51 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
     }
   }, [user, pendingSave, itinerary]);
 
-  const downloadPDF = () => {
-    if (!itinerary) return;
+  const downloadPDF = async () => {
+    const element = itineraryRef.current;
+    if (!element || !itinerary) return;
 
-    const pdf = new jsPDF();
-    let yPosition = 20;
-    const margin = 20;
-    const pageWidth = pdf.internal.pageSize.width;
-    const lineHeight = 7;
-    
-    // Helper function to add text with wrapping and page breaks
-    const addText = (text: string, fontSize: number = 10, isBold: boolean = false) => {
-      pdf.setFontSize(fontSize);
-      pdf.setFont('helvetica', isBold ? 'bold' : 'normal');
-      
-      const maxWidth = pageWidth - (margin * 2);
-      const lines = pdf.splitTextToSize(text, maxWidth);
-      
-      lines.forEach((line: string) => {
-        if (yPosition > pdf.internal.pageSize.height - 30) {
-          pdf.addPage();
-          yPosition = 20;
-        }
-        pdf.text(line, margin, yPosition);
-        yPosition += lineHeight;
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2, // Higher resolution for clarity
+        useCORS: true, // Handle external images if present
+        backgroundColor: '#ffffff', // Ensure white background
       });
-      
-      return yPosition;
-    };
-
-    // Add title
-    yPosition = addText(`${itinerary.destination} Travel Itinerary`, 18, true);
-    yPosition += 5;
-    addText(`${itinerary.duration} days of unforgettable experiences`, 12);
-    yPosition += 10;
-
-    // Add summary if available
-    if (itinerary.summary) {
-      addText(itinerary.summary, 10);
-      yPosition += 10;
-    }
-
-    // Add overview
-    addText(`Duration: ${itinerary.duration} Days`, 10, true);
-    addText(`Total Budget: ${itinerary.totalBudget}`, 10, true);
-    addText(`Group Size: ${travelData.groupSize.replace('-', ' ')}`, 10, true);
-    yPosition += 10;
-
-    // Add daily itinerary
-    itinerary.days?.forEach((day: any) => {
-      yPosition = addText(`Day ${day.day} - ${day.theme}`, 14, true);
-      if (day.date) {
-        addText(`Date: ${day.date}`, 10);
-      }
-      yPosition += 5;
-
-      // Activities
-      if (day.activities?.length) {
-        addText('Daily Schedule:', 12, true);
-        day.activities.forEach((activity: any) => {
-          addText(`${activity.time} - ${activity.name}`, 10, true);
-          if (activity.description) {
-            addText(`  ${activity.description}`, 9);
-          }
-          if (activity.duration) {
-            addText(`  Duration: ${activity.duration}`, 9);
-          }
-          if (activity.cost) {
-            addText(`  Cost: ${activity.cost}`, 9);
-          }
-          if (activity.location) {
-            addText(`  Location: ${activity.location}`, 9);
-          }
-          if (activity.tips) {
-            addText(`  Tip: ${activity.tips}`, 9);
-          }
-          yPosition += 3;
-        });
-      }
-
-      // Meals
-      if (day.meals?.length) {
-        yPosition += 3;
-        addText('Meal Recommendations:', 12, true);
-        day.meals.forEach((meal: any) => {
-          addText(`${meal.meal}: ${meal.restaurant || meal.suggestion}`, 10, true);
-          if (meal.cuisine) {
-            addText(`  Cuisine: ${meal.cuisine}`, 9);
-          }
-          if (meal.description) {
-            addText(`  ${meal.description}`, 9);
-          }
-          if (meal.cost) {
-            addText(`  Cost: ${meal.cost}`, 9);
-          }
-        });
-      }
-
-      // Transportation
-      if (day.transportation) {
-        yPosition += 3;
-        addText('Transportation:', 12, true);
-        addText(day.transportation, 10);
-      }
-
-      // Daily cost
-      if (day.estimatedCost) {
-        yPosition += 3;
-        addText(`Estimated Daily Cost: ${day.estimatedCost}`, 11, true);
-      }
-
-      yPosition += 15; // Space between days
-    });
-
-    // Add additional information
-    if (itinerary.packingList?.length) {
-      yPosition += 5;
-      addText('Packing List:', 14, true);
-      itinerary.packingList.forEach((item: string) => {
-        addText(`• ${item}`, 10);
+      const imgData = canvas.toDataURL('image/jpeg', 0.98); // High-quality JPEG
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'in',
+        format: 'letter',
       });
-      yPosition += 10;
-    }
+      const imgWidth = 8.0; // Letter width (8.5in) minus 0.25in margins
+      const imgHeight = (canvas.height * imgWidth) / canvas.width; // Maintain aspect ratio
+      let heightLeft = imgHeight;
+      let position = 0.25; // Top margin
 
-    if (itinerary.localTips?.length) {
-      yPosition += 5;
-      addText('Local Tips:', 14, true);
-      itinerary.localTips.forEach((tip: string) => {
-        addText(`• ${tip}`, 10);
+      pdf.addImage(imgData, 'JPEG', 0.25, position, imgWidth, imgHeight);
+      heightLeft -= 11 - 0.5; // Letter height minus margins
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight + 0.25;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0.25, position, imgWidth, imgHeight);
+        heightLeft -= 11 - 0.5;
+      }
+
+      const fileName = `${itinerary.destination.replace(/\s+/g, '_')}_Itinerary.pdf`;
+      pdf.save(fileName);
+
+      toast({
+        title: "PDF Downloaded!",
+        description: "Your itinerary has been saved as a PDF.",
       });
-      yPosition += 10;
-    }
-
-    if (itinerary.budgetBreakdown) {
-      yPosition += 5;
-      addText('Budget Breakdown:', 14, true);
-      Object.entries(itinerary.budgetBreakdown).forEach(([category, cost]) => {
-        addText(`${category}: ${cost}`, 10);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "PDF Generation Failed",
+        description: "Unable to generate the PDF. Please try again.",
+        variant: "destructive",
       });
     }
-
-    // Save the PDF
-    const fileName = `${itinerary.destination.replace(/\s+/g, '_')}_Itinerary.pdf`;
-    pdf.save(fileName);
-    
-    toast({
-      title: "PDF Downloaded!",
-      description: "Your itinerary has been saved as a PDF.",
-    });
   };
 
   useEffect(() => {
@@ -365,7 +262,7 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 py-8">
+    <div ref={itineraryRef} className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
