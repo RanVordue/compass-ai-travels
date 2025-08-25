@@ -103,12 +103,7 @@ const SavedItineraries: React.FC = () => {
   };
 
   const viewItinerary = (itinerary: SavedItinerary) => {
-    // For now, we'll just show a toast. In a full implementation, 
-    // you might want to create a detailed view page
-    toast({
-      title: "Coming Soon",
-      description: "Detailed itinerary view is being developed.",
-    });
+    navigate(`/saved-itineraries/${itinerary.id}`);
   };
 
   if (authLoading || loading) {
