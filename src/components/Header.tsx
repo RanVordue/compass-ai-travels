@@ -28,7 +28,7 @@ const Header: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-orange-600 bg-clip-text text-transparent">
-              AI Travel Planner
+              Compass AI
             </h1>
             <div className="h-9 w-20 bg-muted animate-pulse rounded-md" />
           </div>
@@ -43,7 +43,7 @@ const Header: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-orange-600 bg-clip-text text-transparent">
-              AI Travel Planner
+              Compass AI
             </h1>
             
             {user ? (
