@@ -25,7 +25,10 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
   const [pendingSave, setPendingSave] = useState(false);
   const { toast } = useToast();
   const { user, loading } = useAuth();
-  const itineraryRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const daysRef = useRef<(HTMLDivElement | null)[]>([]);
+  const additionalRef = useRef<HTMLDivElement>(null);
+  const ctaRef = useRef<HTMLDivElement>(null);
 
   const saveItinerary = async () => {
     if (!user) {
@@ -76,33 +79,50 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
   }, [user, pendingSave, itinerary]);
 
   const downloadPDF = async () => {
-    const element = itineraryRef.current;
-    if (!element || !itinerary) return;
+    if (!itinerary) return;
 
     try {
-      const canvas = await html2canvas(element, {
-        scale: 2, // Higher resolution for clarity
-        useCORS: true, // Handle external images if present
-        backgroundColor: '#ffffff', // Ensure white background
-      });
-      const imgData = canvas.toDataURL('image/jpeg', 0.98); // High-quality JPEG
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'in',
         format: 'letter',
       });
-      const imgWidth = 8.0; // Letter width (8.5in) minus 0.25in margins
-      const imgHeight = (canvas.height * imgWidth) / canvas.width; // Maintain aspect ratio
-      let heightLeft = imgHeight;
-      let position = 0.25; // Top margin
 
-      pdf.addImage(imgData, 'JPEG', 0.25, position, imgWidth, imgHeight);
-      heightLeft -= 11 - 0.5; // Letter height minus margins
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight + 0.25;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0.25, position, imgWidth, imgHeight);
-        heightLeft -= 11 - 0.5;
+      const topMargin = 0.25;
+      const bottomMargin = 0.25;
+      const leftMargin = 0.25;
+      const pageHeight = 11;
+      const usableWidth = 8.5 - leftMargin * 2;
+      let currentY = topMargin;
+
+      // Collect sections, excluding the top button header
+      const sections = [
+        headerRef.current,
+        ...daysRef.current,
+        additionalRef.current,
+        ctaRef.current
+      ].filter(Boolean);
+
+      for (const section of sections) {
+        if (!section) continue;
+
+        const canvas = await html2canvas(section, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.98);
+        const imgHeight = (canvas.height * usableWidth) / canvas.width;
+
+        // If it doesn't fit on the current page, start a new page
+        if (currentY + imgHeight > pageHeight - bottomMargin) {
+          pdf.addPage();
+          currentY = topMargin;
+        }
+
+        pdf.addImage(imgData, 'JPEG', leftMargin, currentY, usableWidth, imgHeight);
+        currentY += imgHeight;
       }
 
       const fileName = `${itinerary.destination.replace(/\s+/g, '_')}_Itinerary.pdf`;
@@ -121,6 +141,10 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
       });
     }
   };
+
+  useEffect(() => {
+    daysRef.current = daysRef.current.slice(0, itinerary?.days?.length || 0);
+  }, [itinerary]);
 
   useEffect(() => {
     const generateItinerary = async () => {
@@ -262,7 +286,7 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
   }
 
   return (
-    <div ref={itineraryRef} className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -295,7 +319,7 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
         </div>
 
         {/* Itinerary Header */}
-        <Card className="shadow-lg border-0 mb-8">
+        <Card ref={headerRef} className="shadow-lg border-0 mb-8">
           <CardHeader className="text-center">
             <CardTitle className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-orange-600 bg-clip-text text-transparent">
               Your {itinerary.destination} Adventure
@@ -330,7 +354,7 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
         {/* Daily Itinerary */}
         <div className="space-y-8">
           {itinerary.days?.map((day: any, index: number) => (
-            <Card key={day.day} className="shadow-lg border-0 overflow-hidden">
+            <Card key={day.day} ref={(el) => daysRef.current[index] = el} className="shadow-lg border-0 overflow-hidden">
               <CardHeader className="bg-gradient-to-r from-blue-600 to-orange-600 text-white">
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -428,7 +452,7 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
 
         {/* Additional Information */}
         {(itinerary.packingList || itinerary.localTips || itinerary.budgetBreakdown) && (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+          <div ref={additionalRef} className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
             {itinerary.packingList && (
               <Card className="shadow-lg border-0">
                 <CardHeader>
@@ -486,7 +510,7 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
         )}
 
         {/* CTA Section */}
-        <Card className="shadow-lg border-0 mt-12 bg-gradient-to-r from-blue-600 to-orange-600">
+        <Card ref={ctaRef} className="shadow-lg border-0 mt-12 bg-gradient-to-r from-blue-600 to-orange-600">
           <CardContent className="text-center py-12">
             <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">
               Ready to make this trip happen?
