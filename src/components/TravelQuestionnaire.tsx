@@ -30,7 +30,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
     specialNeeds: '',
     additionalInfo: ''
   });
-  
+  /*
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isFetching, setIsFetching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -99,7 +99,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
+*/
   const interests = [
     'Food & Dining', 'Art & Museums', 'History & Culture', 'Nightlife', 
     'Shopping', 'Nature & Outdoors', 'Adventure Sports', 'Photography',
@@ -202,46 +202,18 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
           <CardContent className="space-y-6">
             {/* Step 0: Trip Basics */}
             {currentStep === 0 && (
-              <div className="space-y-6">
-                <div className="relative">
+              <div className="space-y-6">             
+                <div>
                   <Label htmlFor="destination" className="text-lg font-medium">
                     Where are you going?
                   </Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="destination"
-                      placeholder="e.g., Paris, France or Tokyo, Japan"
-                      value={formData.destination}
-                      onChange={handleDestinationChange}
-                      className="mt-2 text-lg p-4 pl-10"
-                      ref={inputRef}
-                    />
-                  </div>
-                  {showSuggestions && suggestions.length > 0 && (
-                    <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                      {suggestions.map((place, index) => (
-                        <div
-                          key={index}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                          onClick={() => handleSelectSuggestion(place)}
-                        >
-                          <p className="text-sm font-medium">
-                            {place.properties.city}, {place.properties.country}
-                            {place.properties.state ? `, ${place.properties.state}` : ''}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {place.properties.formatted}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {isFetching && (
-                    <div className="absolute right-3 top-3">
-                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-600"></div>
-                    </div>
-                  )}
+                  <Input
+                    id="destination"
+                    placeholder="e.g., Paris, France or Tokyo, Japan"
+                    value={formData.destination}
+                    onChange={(e) => handleInputChange('destination', e.target.value)}
+                    className="mt-2 text-lg p-4"
+                  />
                 </div>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
