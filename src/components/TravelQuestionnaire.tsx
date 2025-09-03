@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, ArrowRight, MapPin } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import debounce from 'lodash.debounce';
+import { supabase } from "@/integrations/supabase/client";
 
 interface TravelQuestionnaireProps {
   onComplete: (data: any) => void;
