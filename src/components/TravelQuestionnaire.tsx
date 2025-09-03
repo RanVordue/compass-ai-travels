@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, ArrowRight  } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 //import { useToast } from "@/components/ui/use-toast";
 //import debounce from 'lodash.debounce';
 
@@ -30,7 +30,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
     specialNeeds: '',
     additionalInfo: ''
   });
-  /*
+/*
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isFetching, setIsFetching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -202,7 +202,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
           <CardContent className="space-y-6">
             {/* Step 0: Trip Basics */}
             {currentStep === 0 && (
-              <div className="space-y-6">             
+              <div className="space-y-6">
                 <div>
                   <Label htmlFor="destination" className="text-lg font-medium">
                     Where are you going?
