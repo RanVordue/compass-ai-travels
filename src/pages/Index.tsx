@@ -6,10 +6,13 @@ import { MapPin, Calendar, DollarSign, Heart, Clock, Users } from 'lucide-react'
 import TravelQuestionnaire from '@/components/TravelQuestionnaire';
 import ItineraryDisplay from '@/components/ItineraryDisplay';
 import Header from '@/components/Header';
+import SubscriptionStatus from '@/components/SubscriptionStatus';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
   const [currentStep, setCurrentStep] = useState<'welcome' | 'questionnaire' | 'itinerary'>('welcome');
   const [travelData, setTravelData] = useState(null);
+  const { user } = useAuth();
 
   const handleQuestionnaireComplete = (data: any) => {
     setTravelData(data);
@@ -72,6 +75,13 @@ const Index = () => {
           </div>
         </div>
       </div>
+
+      {/* Subscription Status Section - Only for logged in users */}
+      {user && (
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <SubscriptionStatus />
+        </div>
+      )}
 
       {/* Features Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">

@@ -1,1 +1,16 @@
 project_id = "jansyseafqmyrwuiskxs"
+
+[functions.autocomplete-geoapify]
+verify_jwt = false
+
+[functions.create-checkout]
+verify_jwt = true
+
+[functions.check-subscription]
+verify_jwt = true
+
+[functions.customer-portal]
+verify_jwt = true
+
+[functions.generate-itinerary]
+verify_jwt = false

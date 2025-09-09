@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import LoginModal from './LoginModal';
-import { LogOut, User, BookOpen } from 'lucide-react';
+import { LogOut, User, BookOpen, Crown, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,13 +15,15 @@ import {
 
 const Header: React.FC = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const { user, signOut, loading } = useAuth();
+  const { user, signOut, loading, subscriptionInfo } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
     await signOut();
     window.location.reload();
   };
+
+  const isPremium = subscriptionInfo?.subscribed;
 
   if (loading) {
     return (
@@ -42,9 +45,17 @@ const Header: React.FC = () => {
       <header className="w-full bg-white/80 backdrop-blur-sm border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
-            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-orange-600 bg-clip-text text-transparent">
-              Compass AI
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-orange-600 bg-clip-text text-transparent">
+                Compass AI
+              </h1>
+              {isPremium && (
+                <Badge className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white border-0">
+                  <Crown className="w-3 h-3 mr-1" />
+                  Premium
+                </Badge>
+              )}
+            </div>
             
             {user ? (
               <DropdownMenu>
@@ -57,6 +68,18 @@ const Header: React.FC = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <div className="flex items-center justify-start gap-2 p-2">
+                    <div className="flex flex-col space-y-1 leading-none">
+                      <p className="text-sm font-medium">{user.user_metadata?.full_name || user.email}</p>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={isPremium ? "default" : "secondary"} className="text-xs">
+                          {subscriptionInfo?.subscription_tier || 'Free'}
+                        </Badge>
+                        {isPremium && <Sparkles className="w-3 h-3 text-yellow-500" />}
+                      </div>
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => navigate('/saved-itineraries')}>
                     <BookOpen className="mr-2 h-4 w-4" />
                     Saved Itineraries

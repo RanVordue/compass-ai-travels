@@ -2,14 +2,25 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
+interface SubscriptionInfo {
+  subscribed: boolean;
+  subscription_tier: string;
+  subscription_end: string | null;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  subscriptionInfo: SubscriptionInfo | null;
+  subscriptionLoading: boolean;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signInWithProvider: (provider: 'google' | 'facebook' | 'apple') => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
+  checkSubscriptionStatus: () => Promise<void>;
+  createCheckoutSession: () => Promise<{ url?: string; error?: any }>;
+  openCustomerPortal: () => Promise<{ url?: string; error?: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,6 +37,83 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+
+  // Check subscription status
+  const checkSubscriptionStatus = async () => {
+    if (!session?.access_token) return;
+    
+    setSubscriptionLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('check-subscription', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) {
+        console.error('Error checking subscription:', error);
+        return;
+      }
+
+      setSubscriptionInfo({
+        subscribed: data.subscribed,
+        subscription_tier: data.subscription_tier,
+        subscription_end: data.subscription_end,
+      });
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  };
+
+  // Create checkout session
+  const createCheckoutSession = async () => {
+    if (!session?.access_token) {
+      return { error: 'Not authenticated' };
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { url: data.url };
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  };
+
+  // Open customer portal
+  const openCustomerPortal = async () => {
+    if (!session?.access_token) {
+      return { error: 'Not authenticated' };
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-portal', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { url: data.url };
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  };
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -34,6 +122,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // Check subscription status when auth state changes
+        if (session?.user && event === 'SIGNED_IN') {
+          setTimeout(() => {
+            checkSubscriptionStatus();
+          }, 1000); // Small delay to ensure session is fully established
+        } else if (event === 'SIGNED_OUT') {
+          setSubscriptionInfo(null);
+        }
       }
     );
 
@@ -42,6 +139,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+
+      // Check subscription for existing session
+      if (session?.user) {
+        setTimeout(() => {
+          checkSubscriptionStatus();
+        }, 1000);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -92,10 +196,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     session,
     loading,
+    subscriptionInfo,
+    subscriptionLoading,
     signUp,
     signIn,
     signInWithProvider,
     signOut,
+    checkSubscriptionStatus,
+    createCheckoutSession,
+    openCustomerPortal,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
