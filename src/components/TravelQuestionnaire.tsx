@@ -139,7 +139,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   const steps = [
     {
       title: "Trip Basics",
-      description: "Test - Tell us where and when you're traveling"
+      description: "Tell us where and when you're traveling"
     },
     {
       title: "Budget & Group",
