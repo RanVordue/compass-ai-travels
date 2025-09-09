@@ -87,7 +87,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   const handleDestinationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setFormData(prev => ({ ...prev, destination: value }));
-    fetchSuggestions(value);
+    debouncedFetchSuggestions(value);
   };
 
   // Handle clicks outside to close suggestions
