@@ -70,7 +70,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
     }
   };
 
-  const debouncedFetchSuggestions = debounce(fetchSuggestions, 300);
+  const debouncedFetchSuggestions =  React.useRef(debounce(fetchSuggestions, 300)).current;
 
   // Handle selecting a suggestion
   const handleSelectSuggestion = (place: any) => {
