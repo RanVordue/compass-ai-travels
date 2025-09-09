@@ -85,7 +85,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
 
   // Handle input change for destination
   const handleDestinationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
+    const value = e.target.value;
     setFormData(prev => ({ ...prev, destination: value }));
     debouncedFetchSuggestions(value);
   };
