@@ -48,7 +48,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
 
     setIsFetching(true);
     try {
-      const { data, error } = await supabase.functions.invoke('geoapify-autocomplete', {
+      const { data, error } = await supabase.functions.invoke('autocomplete-geoapify', {
         body: { text: query }
       });
 
