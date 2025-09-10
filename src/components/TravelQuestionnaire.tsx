@@ -33,6 +33,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   });
 
   const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [cachedSuggestions, setCachedSuggestions] = useState<any[]>([]);
   const [previousQuery, setPreviousQuery] = useState('');
   const [isFetching, setIsFetching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -43,6 +44,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   const fetchSuggestions = async (query: string) => {
     if (query.length < 3) {
       setSuggestions([]);
+      ([]);
       setPreviousQuery('');
       setShowSuggestions(false);
       return;
@@ -59,6 +61,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
       console.log('Geoapify response:', data); // Debug log
       const results = data?.results || [];
       setSuggestions(results);
+      (results);
       setPreviousQuery(query);
       setShowSuggestions(results.length > 0);
     } catch (error) {
@@ -69,6 +72,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
         variant: "destructive",
       });
       setSuggestions([]);
+      ([]);
       setPreviousQuery('');
       setShowSuggestions(false);
     } finally {
@@ -80,7 +84,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
 
   // Handle input focus to show cached suggestions
   const handleInputFocus = () => {
-    if (formData.destination === lastQuery && suggestions.length > 0) {
+    if (formData.destination === lastQuery && cachedSuggestions.length > 0) {
       setSuggestions(cachedSuggestions);
       setShowSuggestions(true);
     }
