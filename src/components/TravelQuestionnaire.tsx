@@ -39,7 +39,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Fetch place suggestions from Geoapify
-  const fetchSuggestions = async (query: string) => {
+  const fetchSuggestions = debounce(async (query: string) => {
     if (query.length < 3) {
       setSuggestions([]);
       setShowSuggestions(false);
@@ -55,7 +55,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
       if (error) throw error;
 
       setSuggestions(data.features || []);
-      setShowSuggestions(true);
+      setShowSuggestions(data.features.length > 0);
     } catch (error) {
       console.error('Error fetching suggestions:', error);
       toast({
@@ -68,13 +68,11 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
     } finally {
       setIsFetching(false);
     }
-  };
-
-  const debouncedFetchSuggestions =  React.useRef(debounce(fetchSuggestions, 300)).current;
+  }, 300);
 
   // Handle selecting a suggestion
   const handleSelectSuggestion = (place: any) => {
-    const placeName = `${place.properties.city}, ${place.properties.country}${place.properties.state ? `, ${place.properties.state}` : ''}`;
+    const placeName = `${place.properties.city} || place.properties.name || ''}, ${place.properties.country}${place.properties.state ? `, ${place.properties.state}` : ''}`.trim();
     setFormData(prev => ({
       ...prev,
       destination: placeName
@@ -87,7 +85,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   const handleDestinationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setFormData(prev => ({ ...prev, destination: value }));
-    debouncedFetchSuggestions(value);
+    fetchSuggestions(value);
   };
 
   // Handle clicks outside to close suggestions
@@ -221,15 +219,19 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
                     />
                   </div>
                   {showSuggestions && suggestions.length > 0 && (
-                    <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
                       {suggestions.map((place, index) => (
                         <div
                           key={index}
                           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                           onClick={() => handleSelectSuggestion(place)}
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSelectSuggestion(place);
+                          }}
                         >
                           <p className="text-sm font-medium">
-                            {place.properties.city}, {place.properties.country}
+                            {place.properties.city || place.properties.name || ''}, {place.properties.country}
                             {place.properties.state ? `, ${place.properties.state}` : ''}
                           </p>
                           <p className="text-xs text-gray-500">
