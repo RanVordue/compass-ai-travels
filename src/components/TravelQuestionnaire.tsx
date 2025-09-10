@@ -85,6 +85,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   // Handle input focus to show cached suggestions
   const handleInputFocus = () => {
     if (formData.destination === previousQuery && cachedSuggestions.length > 0) {
+      console.log('Re-showing suggestions:', cachedSuggestions); // Debug log
       setSuggestions(cachedSuggestions);
       setShowSuggestions(true);
     }
