@@ -72,7 +72,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
 
   // Handle selecting a suggestion
   const handleSelectSuggestion = (place: any) => {
-    const placeName = `${place.properties.city} || place.properties.name || ''}, ${place.properties.country}${place.properties.state ? `, ${place.properties.state}` : ''}`.trim();
+    const placeName = `${place.properties.city || place.properties.name || ''}, ${place.properties.country}${place.properties.state ? `, ${place.properties.state}` : ''}`.trim();
     setFormData(prev => ({
       ...prev,
       destination: placeName
