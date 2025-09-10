@@ -39,7 +39,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Fetch place suggestions from Geoapify
-  const fetchSuggestions = debounce(async (query: string) => {
+  const fetchSuggestions = async (query: string) => {
     if (query.length < 3) {
       setSuggestions([]);
       setShowSuggestions(false);
@@ -68,7 +68,9 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
     } finally {
       setIsFetching(false);
     }
-  }, 300);
+  };
+
+  const debouncedFetchSuggestions =  React.useRef(debounce(fetchSuggestions, 300)).current;
 
   // Handle selecting a suggestion
   const handleSelectSuggestion = (place: any) => {
@@ -85,7 +87,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   const handleDestinationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setFormData(prev => ({ ...prev, destination: value }));
-    fetchSuggestions(value);
+    debouncedFetchSuggestions(value);
   };
 
   // Handle clicks outside to close suggestions
