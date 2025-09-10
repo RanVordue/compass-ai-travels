@@ -44,7 +44,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   const fetchSuggestions = async (query: string) => {
     if (query.length < 3) {
       setSuggestions([]);
-      ([]);
+      setCachedSuggestions([]);
       setPreviousQuery('');
       setShowSuggestions(false);
       return;
@@ -61,7 +61,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
       console.log('Geoapify response:', data); // Debug log
       const results = data?.results || [];
       setSuggestions(results);
-      (results);
+      setCachedSuggestions(results);
       setPreviousQuery(query);
       setShowSuggestions(results.length > 0);
     } catch (error) {
@@ -72,7 +72,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
         variant: "destructive",
       });
       setSuggestions([]);
-      ([]);
+      setCachedSuggestions([]);
       setPreviousQuery('');
       setShowSuggestions(false);
     } finally {
