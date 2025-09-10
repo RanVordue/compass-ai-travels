@@ -55,9 +55,9 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
       if (error) throw error;
 
       console.log('Geoapify response:', data); // Debug log
-      const features = data?.features || [];
-      setSuggestions(features);
-      setShowSuggestions(features.length > 0);
+      const results = data?.results || [];
+      setSuggestions(results);
+      setShowSuggestions(results.length > 0);
     } catch (error) {
       console.error('Error fetching suggestions:', error);
       toast({
