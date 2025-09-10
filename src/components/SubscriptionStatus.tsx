@@ -77,7 +77,7 @@ const SubscriptionStatus = () => {
             </div>
             <div>
               <CardTitle className="text-lg">
-                {isPremium ? 'Compass AI Premium' : 'Compass AI Free'}
+                {isPremium ? 'Compass AI Premium' : 'Subscribe for Compass AI Premium'}
               </CardTitle>
               <CardDescription>
                 {isPremium ? 'You have access to all premium features' : 'Upgrade to unlock premium features'}
