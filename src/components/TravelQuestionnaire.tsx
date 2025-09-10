@@ -33,6 +33,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   });
 
   const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [previousQuery, setPreviousQuery] = useState('');
   const [isFetching, setIsFetching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const { toast } = useToast();
@@ -42,6 +43,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   const fetchSuggestions = async (query: string) => {
     if (query.length < 3) {
       setSuggestions([]);
+      setPreviousQuery('');
       setShowSuggestions(false);
       return;
     }
@@ -57,6 +59,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
       console.log('Geoapify response:', data); // Debug log
       const results = data?.results || [];
       setSuggestions(results);
+      setPreviousQuery(query);
       setShowSuggestions(results.length > 0);
     } catch (error) {
       console.error('Error fetching suggestions:', error);
@@ -66,6 +69,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
         variant: "destructive",
       });
       setSuggestions([]);
+      setPreviousQuery('');
       setShowSuggestions(false);
     } finally {
       setIsFetching(false);
@@ -74,6 +78,14 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
 
   const debouncedFetchSuggestions =  React.useRef(debounce(fetchSuggestions, 300)).current;
 
+  // Handle input focus to show cached suggestions
+  const handleInputFocus = () => {
+    if (formData.destination === lastQuery && suggestions.length > 0) {
+      setSuggestions(cachedSuggestions);
+      setShowSuggestions(true);
+    }
+  };
+  
   // Handle selecting a suggestion
   const handleSelectSuggestion = (place: any) => {
     const placeName = `${place.city || place.name || ''}, ${place.country} ${place.state ? `, ${place.state}` : ''}`.trim();
@@ -82,6 +94,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
       destination: placeName
     }));
     setSuggestions([]);
+    setPreviousQuery('');
     setShowSuggestions(false);
   };
 
@@ -218,6 +231,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
                       placeholder="e.g., Paris, France or Tokyo, Japan"
                       value={formData.destination}
                       onChange={handleDestinationChange}
+                      onFocus={handleInputFocus}
                       className="mt-2 text-lg p-4 pl-10"
                       ref={inputRef}
                     />
