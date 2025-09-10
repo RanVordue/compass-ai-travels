@@ -76,7 +76,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
 
   // Handle selecting a suggestion
   const handleSelectSuggestion = (place: any) => {
-    const placeName = `${place.city || ''}, ${place.country} ${place.state ? `, ${place.state}` : ''}`.trim();
+    const placeName = `${place.city || place.name || ''}, ${place.country} ${place.state ? `, ${place.state}` : ''}`.trim();
     setFormData(prev => ({
       ...prev,
       destination: placeName
@@ -235,7 +235,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
                           }}
                         >
                           <p className="text-sm font-medium">
-                            {place.city || ''}, {place.country}
+                            {place.city || place.name || ''}, {place.country}
                             {place.state ? `, ${place.state}` : ''}
                           </p>
                           <p className="text-xs text-gray-500">
