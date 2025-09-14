@@ -77,164 +77,221 @@ const ViewSavedItinerary: React.FC = () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    let yPosition = 15;
+    let yPosition = 20;
 
-    // Helper function to add gradient-like banner (simulated with rectangles)
+    // Tailwind RGB colors
+    const blue600 = [37, 99, 235];
+    const orange600 = [234, 88, 12];
+    const gray50 = [249, 250, 251];
+    const blue50 = [239, 246, 255];
+    const orange50 = [253, 248, 242];
+    const green50 = [240, 253, 244];
+    const green600 = [5, 150, 105];
+    const blue500 = [59, 130, 246];
+    const orange400 = [251, 146, 60];
+    const yellow400 = [250, 204, 21];
+    const yellow50 = [254, 252, 232];
+    const gray600 = [75, 85, 99];
+    const gray700 = [55, 65, 81];
+    const white = [255, 255, 255];
+
+    // Gradient banner function
     const addGradientBanner = (y: number, height: number) => {
-      // Simulate blue to orange gradient with multiple rectangles
-      const gradientSteps = 10;
-      for (let i = 0; i < gradientSteps; i++) {
-        const blue = 72 + (i * (255 - 72) / gradientSteps);
-        const green = 94 + (i * (165 - 94) / gradientSteps);
-        const red = 255 - (i * (255 - 255) / gradientSteps);
-        doc.setFillColor(red, green, blue);
-        doc.rect(0, y + (i * height / gradientSteps), pageWidth, height / gradientSteps, 'F');
+      const steps = 20;
+      for (let i = 0; i < steps; i++) {
+        const ratio = i / (steps - 1);
+        const r = Math.round(blue600[0] + ratio * (orange600[0] - blue600[0]));
+        const g = Math.round(blue600[1] + ratio * (orange600[1] - blue600[1]));
+        const b = Math.round(blue600[2] + ratio * (orange600[2] - blue600[2]));
+        doc.setFillColor(r, g, b);
+        doc.rect(0, y + (i * height / steps), pageWidth, height / steps, 'F');
       }
       return y + height;
     };
 
-    // Helper for section headers
-    const addSectionHeader = (text: string, y: number, fontSize = 16, bold = true) => {
+    // Add text with wrapping
+    const addWrappedText = (text: string, x: number, y: number, maxWidth: number, fontSize: number = 10, bold = false, color = [0, 0, 0]) => {
       doc.setFontSize(fontSize);
       doc.setFont(undefined, bold ? 'bold' : 'normal');
-      doc.setTextColor(0, 0, 0);
-      const lines = doc.splitTextToSize(text, pageWidth - 40);
+      doc.setTextColor(color[0], color[1], color[2]);
+      const lines = doc.splitTextToSize(text, maxWidth);
       lines.forEach((line: string) => {
-        if (y > pageHeight - 20) {
-          doc.addPage();
-          y = 15;
-        }
-        doc.text(line, 20, y);
-        y += 6;
+        doc.text(line, x, y);
+        y += fontSize * 0.7;
       });
-      return y + 5;
-    };
-
-    // Helper for day headers with banner
-    const addDayHeader = (dayNum: number, date: string, theme: string, y: number) => {
-      y = addGradientBanner(y, 35);
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(18);
-      doc.setFont(undefined, 'bold');
-      doc.text(`Day ${dayNum}`, 20, y - 25);
-      doc.setFontSize(12);
-      doc.text(date, 20, y - 18);
-      
-      // Theme badge
-      if (theme) {
-        doc.setFillColor(255, 165, 0);
-        doc.rect(pageWidth - 120, y - 28, 100, 20, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(10);
-        const themeLines = doc.splitTextToSize(theme, 95);
-        themeLines.forEach((line: string, idx: number) => {
-          doc.text(line, pageWidth - 115, y - 25 + (idx * 4));
-        });
-      }
       doc.setTextColor(0, 0, 0);
-      doc.setFont(undefined, 'normal');
       return y;
     };
 
-    // Helper for activity items
-    const addActivity = (time: string, name: string, desc: string, duration: string, cost: string, location: string, tips: string, y: number) => {
-      // Activity card background
-      doc.setFillColor(248, 249, 250); // Light gray
-      doc.rect(15, y, pageWidth - 30, 30, 'F');
-      doc.setDrawColor(173, 216, 230); // Light blue border
-      doc.rect(15, y, pageWidth - 30, 30);
-      
+    // Add day number circle
+    const addDayCircle = (dayNum: number, x: number, y: number, radius: number) => {
+      doc.setFillColor(white[0], white[1], white[2]);
+      doc.circle(x, y, radius, 'F');
+      doc.setDrawColor(blue600[0], blue600[1], blue600[2]);
+      doc.circle(x, y, radius, 'S');
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(blue600[0], blue600[1], blue600[2]);
+      doc.text(dayNum.toString(), x, y + 5, { align: 'center' });
+      doc.setTextColor(0, 0, 0);
+    };
+
+    // Add theme badge
+    const addThemeBadge = (theme: string, x: number, y: number, width: number, height: number) => {
+      doc.setFillColor(orange600[0], orange600[1], orange600[2]);
+      doc.rect(x, y, width, height, 'F');
+      doc.setDrawColor(orange600[0], orange600[1], orange600[2]);
+      doc.rect(x, y, width, height, 'S');
       doc.setFontSize(10);
       doc.setFont(undefined, 'bold');
-      doc.text(time, 20, y + 6);
+      doc.setTextColor(white[0], white[1], white[2]);
+      const lines = doc.splitTextToSize(theme, width - 10);
+      lines.forEach((line: string, idx: number) => {
+        doc.text(line, x + 5, y + 8 + (idx * 4), { align: 'left' });
+      });
+      doc.setTextColor(0, 0, 0);
+    };
+
+    // Add activity box
+    const addActivityBox = (time: string, name: string, desc: string, duration: string, cost: string, location: string, tips: string, y: number) => {
+      const boxWidth = pageWidth - 40;
+      const boxHeight = 50;
+      const borderWidth = 4;
+
+      // Light gray background
+      doc.setFillColor(gray50[0], gray50[1], gray50[2]);
+      doc.rect(20, y, boxWidth, boxHeight, 'F');
+      // Blue left border
+      doc.setDrawColor(blue500[0], blue500[1], blue500[2]);
+      doc.setLineWidth(borderWidth);
+      doc.rect(20, y, borderWidth, boxHeight);
+
+      // Time
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'bold');
+      doc.text(time, 25, y + 10);
+
+      // Name
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text(name, 50, y + 10);
+
+      // Description
+      let currentY = y + 18;
+      doc.setFontSize(10);
       doc.setFont(undefined, 'normal');
-      doc.text(name, 50, y + 6);
-      doc.setFontSize(9);
-      if (desc) {
-        const descLines = doc.splitTextToSize(desc, pageWidth - 70);
-        descLines.forEach((line: string, idx: number) => {
-          doc.text(line, 50, y + 10 + (idx * 4));
-        });
-      }
-      
-      let detailY = y + 20;
+      currentY = addWrappedText(desc, 50, currentY, boxWidth - 60);
+
+      // Details
+      let detailY = currentY + 2;
       if (duration) {
-        doc.text(`⏰ ${duration}`, 50, detailY);
+        doc.text(`Duration: ${duration}`, 50, detailY);
         detailY += 4;
       }
       if (cost) {
-        doc.setTextColor(0, 128, 0);
-        doc.text(`💰 ${cost}`, 50, detailY);
+        doc.setTextColor(green600[0], green600[1], green600[2]);
+        doc.text(`Cost: ${cost}`, 50, detailY);
         doc.setTextColor(0, 0, 0);
         detailY += 4;
       }
       if (location) {
-        doc.text(`📍 ${location}`, 50, detailY);
+        doc.text(`Location: ${location}`, 50, detailY);
         detailY += 4;
       }
       if (tips) {
-        doc.setTextColor(30, 144, 255);
-        doc.text(`💡 ${tips}`, 50, detailY);
+        doc.setTextColor(blue500[0], blue500[1], blue500[2]);
+        doc.text(`Tip: ${tips}`, 50, detailY);
         doc.setTextColor(0, 0, 0);
       }
-      return y + 35;
+
+      return y + boxHeight + 5;
     };
 
-    // Helper for meal cards
-    const addMealCard = (mealType: string, restaurant: string, desc: string, cuisine: string, cost: string, y: number) => {
-      doc.setFillColor(255, 228, 196); // Light orange
-      doc.rect(20, y, 80, 40, 'F');
-      doc.setDrawColor(255, 140, 0); // Orange border
-      doc.rect(20, y, 80, 40);
-      
-      doc.setFontSize(11);
+    // Add meal card
+    const addMealCard = (mealType: string, restaurant: string, cuisine: string, desc: string, cost: string, y: number, col: number) => {
+      const cardWidth = 80;
+      const cardHeight = 60;
+      const x = 20 + col * 90;
+      const borderWidth = 4;
+
+      // Light orange background
+      doc.setFillColor(orange50[0], orange50[1], orange50[2]);
+      doc.rect(x, y, cardWidth, cardHeight, 'F');
+      // Orange left border
+      doc.setDrawColor(orange400[0], orange400[1], orange400[2]);
+      doc.setLineWidth(borderWidth);
+      doc.rect(x, y, borderWidth, cardHeight);
+
+      // Meal type and restaurant
+      doc.setFontSize(12);
       doc.setFont(undefined, 'bold');
-      doc.text(`${mealType}: ${restaurant}`, 22, y + 8);
-      doc.setFont(undefined, 'normal');
-      doc.setFontSize(9);
-      if (cuisine) doc.text(cuisine, 22, y + 15);
-      if (desc) {
-        const descLines = doc.splitTextToSize(desc, 75);
-        descLines.forEach((line: string, idx: number) => {
-          doc.text(line, 22, y + 20 + (idx * 4));
-        });
+      doc.text(`${mealType}: ${restaurant}`, x + 5, y + 10);
+
+      // Cuisine
+      if (cuisine) {
+        doc.setTextColor(orange600[0], orange600[1], orange600[2]);
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'bold');
+        doc.text(cuisine, x + 5, y + 18);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont(undefined, 'normal');
       }
-      doc.setTextColor(0, 128, 0);
-      doc.text(cost, 95, y + 35, { align: 'right' });
-      doc.setTextColor(0, 0, 0);
-      return y + 45;
-    };
 
-    // Helper for budget/transport cards
-    const addInfoCard = (icon: string, title: string, content: string, color: string, y: number, width = 80) => {
-      const rgb = color === 'green' ? [0, 128, 0] : [30, 144, 255];
-      doc.setFillColor(rgb[0], rgb[1], rgb[2], 0.1);
-      doc.rect(20, y, width, 25, 'F');
-      doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
-      doc.rect(20, y, width, 25);
-      
+      // Description
+      let descY = y + 25;
+      doc.setFontSize(10);
+      descY = addWrappedText(desc, x + 5, descY, cardWidth - 10);
+
+      // Cost
+      doc.setTextColor(green600[0], green600[1], green600[2]);
       doc.setFontSize(11);
       doc.setFont(undefined, 'bold');
-      doc.text(`${icon} ${title}`, 22, y + 8);
+      doc.text(cost, x + cardWidth - 5, y + cardHeight - 5, { align: 'right' });
+      doc.setTextColor(0, 0, 0);
       doc.setFont(undefined, 'normal');
-      doc.setFontSize(10);
-      const contentLines = doc.splitTextToSize(content, width - 10);
-      contentLines.forEach((line: string, idx: number) => {
-        doc.text(line, 22, y + 14 + (idx * 4));
-      });
-      return y + 30;
+
+      return y + cardHeight + 5;
+    };
+
+    // Add info card (transport/budget)
+    const addInfoCard = (icon: string, title: string, content: string, color: number[], y: number, isRight = false) => {
+      const cardWidth = (pageWidth - 60) / 2;
+      const cardHeight = 40;
+      const x = isRight ? 20 + cardWidth + 20 : 20;
+      const borderWidth = 4;
+
+      // Background
+      doc.setFillColor(blue50[0], blue50[1], blue50[2]);
+      doc.rect(x, y, cardWidth, cardHeight, 'F');
+      // Border
+      doc.setDrawColor(color[0], color[1], color[2]);
+      doc.setLineWidth(borderWidth);
+      doc.rect(x, y, borderWidth, cardHeight);
+
+      // Icon and title
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text(`${icon} ${title}`, x + 5, y + 10);
+
+      // Content
+      doc.setFontSize(11);
+      doc.setFont(undefined, 'normal');
+      let contentY = y + 20;
+      contentY = addWrappedText(content, x + 5, contentY, cardWidth - 10);
+
+      return y + cardHeight + 5;
     };
 
     const data = itinerary.itinerary_data;
 
-    // Main Header
-    doc.setFontSize(24);
+    // Destination header
+    doc.setFontSize(32);
     doc.setFont(undefined, 'bold');
-    doc.text(data.destination, pageWidth / 2, 20, { align: 'center' });
+    doc.text(data.destination, pageWidth / 2, 30, { align: 'center' });
     yPosition += 15;
     doc.setFontSize(12);
     doc.text(`Duration: ${data.duration} days • Budget: ${data.totalBudget}`, pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 25;
+    yPosition += 30;
 
     // Days
     if (data.days || data.dailyItinerary) {
@@ -244,15 +301,31 @@ const ViewSavedItinerary: React.FC = () => {
         const date = day.date || '';
         const theme = day.theme || '';
 
-        yPosition = addDayHeader(dayNum, date, theme, yPosition);
+        // Day banner - full width gradient
+        yPosition = addGradientBanner(yPosition, 50, blue600, orange600);
 
-        // Daily Schedule Header
-        yPosition = addSectionHeader('Daily Schedule', yPosition, 14);
+        // Day circle
+        addDayCircle(dayNum, 35, yPosition - 35, 15);
+
+        // Date
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'normal');
+        doc.text(date, 35, yPosition - 20);
+
+        // Theme badge on right
+        if (theme) {
+          addThemeBadge(theme, pageWidth - 120, yPosition - 40, 100, 25);
+        }
+
+        yPosition += 5;
+
+        // Daily Schedule header
+        yPosition = addSectionHeader('Daily Schedule', yPosition, 14, true);
 
         // Activities
         if (day.activities) {
           day.activities.forEach((activity: any) => {
-            yPosition = addActivity(
+            yPosition = addActivityBox(
               activity.time || '',
               activity.name || activity.title || '',
               activity.description || '',
@@ -262,79 +335,108 @@ const ViewSavedItinerary: React.FC = () => {
               activity.tips || '',
               yPosition
             );
-            if (yPosition > pageHeight - 40) {
+            if (yPosition > pageHeight - 60) {
               doc.addPage();
-              yPosition = 15;
+              yPosition = 20;
             }
           });
         }
 
-        // Meal Recommendations Header
-        yPosition = addSectionHeader('🍽️ Meal Recommendations', yPosition, 14);
+        // Meals header
+        yPosition = addSectionHeader('Meal Recommendations', yPosition, 14, true);
 
-        // Meals
+        // Meals in 3 columns
         if (day.meals && day.meals.length > 0) {
-          day.meals.forEach((meal: any) => {
-            yPosition = addMealCard(
-              meal.meal || '',
-              meal.restaurant || meal.suggestion || '',
-              meal.description || '',
-              meal.cuisine || '',
-              meal.cost || '',
-              yPosition
-            );
-            if (yPosition > pageHeight - 40) {
-              doc.addPage();
-              yPosition = 15;
+          let mealRowY = yPosition;
+          day.meals.forEach((meal: any, mIndex: number) => {
+            const col = mIndex % 3;
+            if (col === 0 && mIndex > 0) {
+              mealRowY += 65;
             }
+            mealRowY = addMealCard(
+              meal.meal || '',
+              meal.restaurant || meal.name || '',
+              meal.cuisine || '',
+              meal.description || '',
+              meal.cost || '',
+              mealRowY,
+              col
+            );
           });
+          yPosition = Math.max(yPosition, mealRowY + 5);
         }
 
-        // Transportation & Budget
-        yPosition = addSectionHeader('Transportation & Budget', yPosition, 14);
+        // Transportation & Budget header
+        yPosition = addSectionHeader('Transportation & Budget', yPosition, 14, true);
+
+        let infoY = yPosition;
         if (day.transportation) {
-          yPosition = addInfoCard('🚗', 'Transportation', day.transportation, 'blue', yPosition);
+          infoY = addInfoCard('Transportation', day.transportation, blue500, yPosition, false);
         }
         if (day.estimatedCost) {
-          yPosition = addInfoCard('💰', 'Daily Budget', day.estimatedCost, 'green', yPosition);
+          yPosition = addInfoCard('Daily Budget', day.estimatedCost, green600, infoY, true);
         }
-        yPosition += 10;
+        yPosition = Math.max(yPosition, infoY + 45);
+        yPosition += 15;
 
         if (yPosition > pageHeight - 30) {
           doc.addPage();
-          yPosition = 15;
+          yPosition = 20;
         }
       });
     }
 
-    // Additional Sections
+    // Packing List
     if (data.packingList) {
-      yPosition = addSectionHeader('🎒 Packing List', yPosition, 16, true);
+      yPosition = addSectionHeader('Packing List', yPosition, 16, true);
       data.packingList.forEach((item: string) => {
         doc.setFontSize(11);
-        doc.text(`• ${item}`, 20, yPosition);
+        doc.text(`• ${item}`, 25, yPosition);
         yPosition += 6;
       });
       yPosition += 10;
     }
 
+    // Travel Tips
     if (data.tips) {
-      yPosition = addSectionHeader('💡 Travel Tips', yPosition, 16, true);
+      yPosition = addSectionHeader('Travel Tips', yPosition, 16, true);
       data.tips.forEach((tip: string) => {
-        doc.setFontSize(11);
-        doc.text(`• ${tip}`, 20, yPosition);
-        yPosition += 6;
+        // Yellow box
+        doc.setFillColor(yellow50[0], yellow50[1], yellow50[2]);
+        doc.rect(20, yPosition, pageWidth - 40, 25, 'F');
+        doc.setDrawColor(yellow400[0], yellow400[1], yellow400[2]);
+        doc.setLineWidth(4);
+        doc.rect(20, yPosition, 4, 25);
+        doc.setFontSize(10);
+        doc.text(tip, 30, yPosition + 12);
+        yPosition += 30;
       });
-      yPosition += 10;
+      yPosition += 5;
     }
 
+    // Budget Breakdown
     if (data.budgetBreakdown) {
-      yPosition = addSectionHeader('💰 Budget Breakdown', yPosition, 16, true);
-      Object.entries(data.budgetBreakdown).forEach(([category, amount]: [string, any]) => {
-        doc.setFontSize(11);
-        doc.text(`${category}: ${amount}`, 20, yPosition);
-        yPosition += 6;
+      yPosition = addSectionHeader('Budget Breakdown', yPosition, 16, true);
+      let rowY = yPosition;
+      Object.entries(data.budgetBreakdown).forEach(([category, amount]: [string, any], idx: number) => {
+        const col = idx % 4;
+        const x = 20 + col * 50;
+        // Green card
+        doc.setFillColor(green50[0], green50[1], green50[2]);
+        doc.rect(x, rowY, 45, 30, 'F');
+        doc.setDrawColor(green600[0], green600[1], green600[2]);
+        doc.rect(x, rowY, 45, 30);
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+        doc.text(amount.toString(), x + 22.5, rowY + 12, { align: 'center' });
+        doc.setFontSize(9);
+        doc.setFont(undefined, 'normal');
+        doc.text(category, x + 22.5, rowY + 22, { align: 'center' });
+        if (col === 3 || idx === Object.keys(data.budgetBreakdown).length - 1) {
+          rowY += 35;
+        }
       });
+      yPosition = rowY + 10;
     }
 
     doc.save(`${data.destination.replace(/\s+/g, '_')}_Itinerary.pdf`);
@@ -504,7 +606,7 @@ const ViewSavedItinerary: React.FC = () => {
                               </div>
                               {activity.tips && (
                                 <div className="mt-2 text-xs text-blue-600 bg-blue-50 p-2 rounded">
-                                  💡 {activity.tips}
+                                  Tip: {activity.tips}
                                 </div>
                               )}
                             </div>
@@ -516,7 +618,7 @@ const ViewSavedItinerary: React.FC = () => {
 
                   {day.meals && day.meals.length > 0 && (
                     <div className="mb-6">
-                      <h4 className="font-semibold text-lg mb-3">🍽️ Meal Recommendations</h4>
+                      <h4 className="font-semibold text-lg mb-3">Meal Recommendations</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {day.meals.map((meal: any, mealIndex: number) => (
                           <div key={mealIndex} className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-400">
@@ -541,19 +643,13 @@ const ViewSavedItinerary: React.FC = () => {
                   <div className="grid md:grid-cols-2 gap-4">
                     {day.transportation && (
                       <div className="bg-blue-50 p-4 rounded-lg">
-                        <h4 className="font-semibold text-lg mb-2 flex items-center">
-                          <span className="mr-2">🚗</span>
-                          Transportation
-                        </h4>
+                        <h4 className="font-semibold text-lg mb-2">Transportation</h4>
                         <p className="text-gray-600">{day.transportation}</p>
                       </div>
                     )}
                     {day.estimatedCost && (
                       <div className="bg-green-50 p-4 rounded-lg">
-                        <h4 className="font-semibold text-lg mb-2 flex items-center">
-                          <DollarSign className="w-5 h-5 mr-2 text-green-600" />
-                          Daily Budget
-                        </h4>
+                        <h4 className="font-semibold text-lg mb-2">Daily Budget</h4>
                         <p className="text-green-600 font-bold text-xl">{day.estimatedCost}</p>
                       </div>
                     )}
@@ -568,10 +664,7 @@ const ViewSavedItinerary: React.FC = () => {
           {data.packingList && data.packingList.length > 0 && (
             <Card className="shadow-lg">
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <span>🎒</span>
-                  <span>Packing List</span>
-                </CardTitle>
+                <CardTitle>Packing List</CardTitle>
                 <CardDescription>
                   Essential items for your trip
                 </CardDescription>
@@ -592,10 +685,7 @@ const ViewSavedItinerary: React.FC = () => {
           {data.tips && data.tips.length > 0 && (
             <Card className="shadow-lg">
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <span>💡</span>
-                  <span>Travel Tips</span>
-                </CardTitle>
+                <CardTitle>Travel Tips</CardTitle>
                 <CardDescription>
                   Helpful advice for your journey
                 </CardDescription>
@@ -616,10 +706,7 @@ const ViewSavedItinerary: React.FC = () => {
         {data.budgetBreakdown && (
           <Card className="shadow-lg mt-8">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <DollarSign className="w-5 h-5" />
-                <span>Budget Breakdown</span>
-              </CardTitle>
+              <CardTitle>Budget Breakdown</CardTitle>
               <CardDescription>
                 Estimated costs for your trip
               </CardDescription>
