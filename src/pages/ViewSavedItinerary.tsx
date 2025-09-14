@@ -444,6 +444,28 @@ const ViewSavedItinerary: React.FC = () => {
             </Card>
           )}
         </div>
+
+        {/* CTA Section */}
+        <Card ref={ctaRef} className="shadow-lg border-0 mt-12 bg-gradient-to-r from-blue-600 to-orange-600">
+          <CardContent className="text-center py-12">
+            <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">
+              Ready to make this trip happen?
+            </h3>
+            <p className="text-blue-100 text-lg mb-8 max-w-2xl mx-auto">
+              Your personalized itinerary is ready! Download it, share it with travel companions, or make adjustments to fit your style.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button onClick={downloadPDF} size="lg" className="bg-white text-blue-600 hover:bg-gray-50">
+                Download Full Itinerary
+              </Button>
+              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10" onClick={() => navigate('/')}>
+                Plan Another Trip
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 };
 
