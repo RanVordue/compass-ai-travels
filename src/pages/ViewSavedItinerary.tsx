@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import Header from "@/components/Header";
 import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface SavedItinerary {
   id: string;
@@ -30,6 +31,10 @@ const ViewSavedItinerary: React.FC = () => {
   const [itinerary, setItinerary] = useState<SavedItinerary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const daysRef = useRef<(HTMLDivElement | null)[]>([]);
+  const additionalRef = useRef<HTMLDivElement>(null);
+  const ctaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -40,7 +45,7 @@ const ViewSavedItinerary: React.FC = () => {
     if (user && id) {
       fetchItinerary();
     }
-  }, [user, loading, id]);
+  }, [user, loading, id, navigate]);
 
   const fetchItinerary = async () => {
     if (!user || !id) return;
@@ -71,120 +76,70 @@ const ViewSavedItinerary: React.FC = () => {
     }
   };
 
-  const downloadPDF = () => {
+  useEffect(() => {
+    daysRef.current = daysRef.current.slice(0, itinerary?.itinerary_data?.days?.length || 0);
+  }, [itinerary]);
+
+  const downloadPDF = async () => {
     if (!itinerary?.itinerary_data) return;
 
-    const doc = new jsPDF();
-    const pageHeight = doc.internal.pageSize.height;
-    let yPosition = 20;
+    try {
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'in',
+        format: 'letter',
+      });
 
-    const addText = (text: string, fontSize = 12, isBold = false) => {
-      if (yPosition > pageHeight - 20) {
-        doc.addPage();
-        yPosition = 20;
+      const topMargin = 0.25;
+      const bottomMargin = 0.25;
+      const leftMargin = 0.25;
+      const pageHeight = 11;
+      const usableWidth = 8.5 - leftMargin * 2;
+      let currentY = topMargin;
+
+      const sections = [
+        headerRef.current,
+        ...daysRef.current,
+        additionalRef.current,
+        ctaRef.current,
+      ].filter(Boolean);
+
+      for (const section of sections) {
+        if (!section) continue;
+
+        const canvas = await html2canvas(section, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.98);
+        const imgHeight = (canvas.height * usableWidth) / canvas.width;
+
+        if (currentY + imgHeight > pageHeight - bottomMargin) {
+          pdf.addPage();
+          currentY = topMargin;
+        }
+
+        pdf.addImage(imgData, 'JPEG', leftMargin, currentY, usableWidth, imgHeight);
+        currentY += imgHeight;
       }
-      
-      doc.setFontSize(fontSize);
-      if (isBold) {
-        doc.setFont(undefined, 'bold');
-      } else {
-        doc.setFont(undefined, 'normal');
-      }
-      
-      const lines = doc.splitTextToSize(text, 170);
-      lines.forEach((line: string) => {
-        if (yPosition > pageHeight - 20) {
-          doc.addPage();
-          yPosition = 20;
-        }
-        doc.text(line, 20, yPosition);
-        yPosition += fontSize * 0.5 + 2;
+
+      const fileName = `${itinerary.itinerary_data.destination.replace(/\s+/g, '_')}_Itinerary.pdf`;
+      pdf.save(fileName);
+
+      toast({
+        title: "PDF Downloaded!",
+        description: "Your itinerary has been saved as a PDF.",
       });
-      yPosition += 5;
-    };
-
-    const data = itinerary.itinerary_data;
-    
-    addText(`${data.destination} Travel Itinerary`, 18, true);
-    addText(`Duration: ${data.duration} days`, 14);
-    addText(`Budget: ${data.totalBudget}`, 14);
-    yPosition += 10;
-
-    if (data.dailyItinerary || data.days) {
-      const days = data.dailyItinerary || data.days;
-      days.forEach((day: any, index: number) => {
-        addText(`Day ${day.day || index + 1}: ${day.theme || day.title || `Day ${day.day || index + 1}`}`, 16, true);
-        
-        if (day.activities) {
-          addText('Activities:', 14, true);
-          day.activities.forEach((activity: any) => {
-            addText(`• ${activity.name || activity.title}`, 12);
-            if (activity.description) {
-              addText(`  ${activity.description}`, 11);
-            }
-            if (activity.time) {
-              addText(`  Time: ${activity.time}`, 11);
-            }
-            if (activity.cost) {
-              addText(`  Cost: ${activity.cost}`, 11);
-            }
-            if (activity.location) {
-              addText(`  Location: ${activity.location}`, 11);
-            }
-          });
-        }
-
-        if (day.meals) {
-          addText('Meals:', 14, true);
-          day.meals.forEach((meal: any) => {
-            const mealName = meal.restaurant || meal.name || meal.meal;
-            addText(`• ${meal.meal ? meal.meal + ': ' : ''}${mealName}`, 12);
-            if (meal.description) {
-              addText(`  ${meal.description}`, 11);
-            }
-            if (meal.cuisine) {
-              addText(`  Cuisine: ${meal.cuisine}`, 11);
-            }
-            if (meal.cost) {
-              addText(`  Cost: ${meal.cost}`, 11);
-            }
-          });
-        }
-
-        if (day.transportation) {
-          addText('Transportation:', 14, true);
-          addText(`• ${day.transportation}`, 12);
-        }
-
-        if (day.estimatedCost) {
-          addText(`Daily Budget: ${day.estimatedCost}`, 12, true);
-        }
-
-        yPosition += 10;
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "PDF Generation Failed",
+        description: "Unable to generate the PDF. Please try again.",
+        variant: "destructive",
       });
     }
-
-    if (data.packingList) {
-      addText('Packing List:', 16, true);
-      data.packingList.forEach((item: string) => {
-        addText(`• ${item}`, 12);
-      });
-      yPosition += 10;
-    }
-
-    if (data.tips) {
-      addText('Travel Tips:', 16, true);
-      data.tips.forEach((tip: string) => {
-        addText(`• ${tip}`, 12);
-      });
-    }
-
-    doc.save(`${data.destination}-itinerary.pdf`);
-    
-    toast({
-      title: "Downloaded",
-      description: "Your itinerary has been downloaded as a PDF.",
-    });
   };
 
   if (loading || isLoading) {
@@ -267,7 +222,7 @@ const ViewSavedItinerary: React.FC = () => {
             </Button>
           </div>
 
-          <div className="text-center">
+          <div ref={headerRef} className="text-center">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
               {data.destination}
             </h1>
@@ -285,26 +240,27 @@ const ViewSavedItinerary: React.FC = () => {
         </div>
 
         {/* Daily Itinerary */}
-        {(data.dailyItinerary || data.days) && (data.dailyItinerary || data.days).length > 0 && (
-          <div className="space-y-6 mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">Your Itinerary</h2>
-            {(data.dailyItinerary || data.days).map((day: any, index: number) => (
-              <Card key={index} className="shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-                  <CardTitle className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                      <span className="font-bold text-lg">{day.day || index + 1}</span>
+        {(data.days || data.dailyItinerary) && (
+          <div className="space-y-8">
+            {(data.days || data.dailyItinerary).map((day: any, index: number) => (
+              <Card key={day.day || index} ref={(el) => (daysRef.current[index] = el)} className="shadow-lg border-0 overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-blue-600 to-orange-600 text-white">
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                        <span className="font-bold text-lg">{day.day || index + 1}</span>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold">Day {day.day || index + 1}</h3>
+                        {day.date && <p className="text-blue-100">{day.date}</p>}
+                      </div>
                     </div>
-                    <div>
-                      <div className="text-xl font-bold">Day {day.day || index + 1}</div>
-                      {day.date && <div className="text-blue-100 text-sm">{day.date}</div>}
-                    </div>
+                    {day.theme && (
+                      <Badge variant="secondary" className="bg-white/20 text-white border-0">
+                        {day.theme}
+                      </Badge>
+                    )}
                   </CardTitle>
-                  {day.theme && (
-                    <CardDescription className="text-blue-100">
-                      {day.theme}
-                    </CardDescription>
-                  )}
                 </CardHeader>
                 <CardContent className="p-6">
                   {/* Activities */}
@@ -413,7 +369,7 @@ const ViewSavedItinerary: React.FC = () => {
         )}
 
         {/* Additional Information */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div ref={additionalRef} className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
           {/* Packing List */}
           {data.packingList && data.packingList.length > 0 && (
             <Card className="shadow-lg">
@@ -462,32 +418,52 @@ const ViewSavedItinerary: React.FC = () => {
               </CardContent>
             </Card>
           )}
+
+          {/* Budget Breakdown */}
+          {data.budgetBreakdown && (
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <DollarSign className="w-5 h-5" />
+                  <span>Budget Breakdown</span>
+                </CardTitle>
+                <CardDescription>
+                  Estimated costs for your trip
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {Object.entries(data.budgetBreakdown).map(([category, amount]: [string, any]) => (
+                    <div key={category} className="text-center p-4 bg-green-50 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600">{amount}</div>
+                      <div className="text-sm text-gray-600 capitalize">{category}</div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-        {/* Budget Breakdown */}
-        {data.budgetBreakdown && (
-          <Card className="shadow-lg mt-8">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <DollarSign className="w-5 h-5" />
-                <span>Budget Breakdown</span>
-              </CardTitle>
-              <CardDescription>
-                Estimated costs for your trip
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {Object.entries(data.budgetBreakdown).map(([category, amount]: [string, any]) => (
-                  <div key={category} className="text-center p-4 bg-green-50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">{amount}</div>
-                    <div className="text-sm text-gray-600 capitalize">{category}</div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* CTA Section */}
+        <Card ref={ctaRef} className="shadow-lg border-0 mt-12 bg-gradient-to-r from-blue-600 to-orange-600">
+          <CardContent className="text-center py-12">
+            <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">
+              Ready to make this trip happen?
+            </h3>
+            <p className="text-blue-100 text-lg mb-8 max-w-2xl mx-auto">
+              Your personalized itinerary is ready! Download it, share it with travel companions, or make adjustments to fit your style.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button onClick={downloadPDF} size="lg" className="bg-white text-blue-600 hover:bg-gray-50">
+                Download Full Itinerary
+              </Button>
+              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10" onClick={() => navigate('/')}>
+                Plan Another Trip
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
