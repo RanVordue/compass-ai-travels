@@ -34,7 +34,6 @@ const ViewSavedItinerary: React.FC = () => {
   const headerRef = useRef<HTMLDivElement>(null);
   const daysRef = useRef<(HTMLDivElement | null)[]>([]);
   const additionalRef = useRef<HTMLDivElement>(null);
-  const ctaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -101,7 +100,6 @@ const ViewSavedItinerary: React.FC = () => {
         headerRef.current,
         ...daysRef.current,
         additionalRef.current,
-        ctaRef.current,
       ].filter(Boolean);
 
       for (const section of sections) {
@@ -111,6 +109,9 @@ const ViewSavedItinerary: React.FC = () => {
           scale: 2,
           useCORS: true,
           backgroundColor: '#ffffff',
+          width: section.scrollWidth,
+          height: section.scrollHeight,
+          allowTaint: true,
         });
 
         const imgData = canvas.toDataURL('image/jpeg', 0.98);
@@ -201,40 +202,39 @@ const ViewSavedItinerary: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
       <Header />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header Section */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <Button
-              onClick={() => navigate('/saved-itineraries')}
-              variant="outline"
-              className="flex items-center space-x-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Saved Itineraries</span>
-            </Button>
-            
-            <Button
-              onClick={downloadPDF}
-              className="flex items-center space-x-2"
-            >
-              <Download className="w-4 h-4" />
-              <span>Download PDF</span>
-            </Button>
-          </div>
+        {/* Navigation Buttons */}
+        <div className="flex items-center justify-between mb-6">
+          <Button
+            onClick={() => navigate('/saved-itineraries')}
+            variant="outline"
+            className="flex items-center space-x-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Saved Itineraries</span>
+          </Button>
+          
+          <Button
+            onClick={downloadPDF}
+            className="flex items-center space-x-2"
+          >
+            <Download className="w-4 h-4" />
+            <span>Download PDF</span>
+          </Button>
+        </div>
 
-          <div ref={headerRef} className="text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              {data.destination}
-            </h1>
-            <div className="flex justify-center space-x-6 text-gray-600">
-              <div className="flex items-center space-x-2">
-                <Calendar className="w-5 h-5" />
-                <span>{data.duration} days</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <DollarSign className="w-5 h-5" />
-                <span>{data.totalBudget}</span>
-              </div>
+        {/* Header Section - Printable */}
+        <div ref={headerRef} className="text-center mb-8 print:mb-4">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            {data.destination}
+          </h1>
+          <div className="flex justify-center space-x-6 text-gray-600">
+            <div className="flex items-center space-x-2">
+              <Calendar className="w-5 h-5" />
+              <span>{data.duration} days</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <DollarSign className="w-5 h-5" />
+              <span>{data.totalBudget}</span>
             </div>
           </div>
         </div>
@@ -243,227 +243,233 @@ const ViewSavedItinerary: React.FC = () => {
         {(data.days || data.dailyItinerary) && (
           <div className="space-y-8">
             {(data.days || data.dailyItinerary).map((day: any, index: number) => (
-              <Card key={day.day || index} ref={(el) => (daysRef.current[index] = el)} className="shadow-lg border-0 overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-blue-600 to-orange-600 text-white">
-                  <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                        <span className="font-bold text-lg">{day.day || index + 1}</span>
+              <div key={day.day || index} className="print:block">
+                <Card ref={(el) => (daysRef.current[index] = el)} className="shadow-lg border-0 overflow-hidden print:border print:shadow-none">
+                  <CardHeader className="bg-gradient-to-r from-blue-600 to-orange-600 text-white p-6 print:p-4">
+                    <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 print:flex-row print:items-center">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                          <span className="font-bold text-lg">{day.day || index + 1}</span>
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bold">Day {day.day || index + 1}</h3>
+                          {day.date && <p className="text-blue-100 text-sm">{day.date}</p>}
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="text-xl font-bold">Day {day.day || index + 1}</h3>
-                        {day.date && <p className="text-blue-100">{day.date}</p>}
-                      </div>
-                    </div>
-                    {day.theme && (
-                      <Badge variant="secondary" className="bg-white/20 text-white border-0">
-                        {day.theme}
-                      </Badge>
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  {/* Activities */}
-                  {day.activities && day.activities.length > 0 && (
-                    <div className="mb-6">
-                      <h4 className="font-semibold text-lg mb-3 flex items-center">
-                        <Clock className="w-5 h-5 mr-2 text-blue-600" />
-                        Daily Schedule
-                      </h4>
-                      <div className="space-y-4">
-                        {day.activities.map((activity: any, actIndex: number) => (
-                          <div key={actIndex} className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500">
-                            {activity.time && (
-                              <div className="text-sm text-gray-600 font-medium min-w-[80px]">
-                                {activity.time}
-                              </div>
-                            )}
-                            <div className="flex-1">
-                              <h5 className="font-medium text-gray-900 mb-1">
-                                {activity.name || activity.title}
-                              </h5>
-                              {activity.description && (
-                                <p className="text-gray-600 text-sm mb-2">{activity.description}</p>
-                              )}
-                              <div className="flex items-center space-x-4 text-sm text-gray-600">
-                                {activity.duration && (
-                                  <div className="flex items-center space-x-1">
-                                    <Clock className="w-4 h-4" />
-                                    <span>{activity.duration}</span>
-                                  </div>
-                                )}
-                                {activity.cost && (
-                                  <div className="text-green-600 font-medium">
-                                    {activity.cost}
-                                  </div>
-                                )}
-                                {activity.location && (
-                                  <div className="flex items-center space-x-1">
-                                    <MapPin className="w-4 h-4" />
-                                    <span className="truncate">{activity.location}</span>
-                                  </div>
-                                )}
-                              </div>
-                              {activity.tips && (
-                                <div className="mt-2 text-xs text-blue-600 bg-blue-50 p-2 rounded">
-                                  💡 {activity.tips}
+                      {day.theme && (
+                        <Badge variant="secondary" className="bg-white/20 text-white border-0 whitespace-nowrap print:inline-block">
+                          {day.theme}
+                        </Badge>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6 print:p-4">
+                    {/* Activities */}
+                    {day.activities && day.activities.length > 0 && (
+                      <div className="mb-6">
+                        <h4 className="font-semibold text-lg mb-3 flex items-center">
+                          <Clock className="w-5 h-5 mr-2 text-blue-600" />
+                          Daily Schedule
+                        </h4>
+                        <div className="space-y-4">
+                          {day.activities.map((activity: any, actIndex: number) => (
+                            <div key={actIndex} className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500 print:border-l-2">
+                              {activity.time && (
+                                <div className="text-sm text-gray-600 font-medium min-w-[80px] print:min-w-[60px]">
+                                  {activity.time}
                                 </div>
                               )}
+                              <div className="flex-1">
+                                <h5 className="font-medium text-gray-900 mb-1">
+                                  {activity.name || activity.title}
+                                </h5>
+                                {activity.description && (
+                                  <p className="text-gray-600 text-sm mb-2">{activity.description}</p>
+                                )}
+                                <div className="flex flex-wrap items-center space-x-4 text-sm text-gray-600 print:space-x-2 print:space-y-1">
+                                  {activity.duration && (
+                                    <div className="flex items-center space-x-1">
+                                      <Clock className="w-4 h-4" />
+                                      <span>{activity.duration}</span>
+                                    </div>
+                                  )}
+                                  {activity.cost && (
+                                    <div className="text-green-600 font-medium">
+                                      {activity.cost}
+                                    </div>
+                                  )}
+                                  {activity.location && (
+                                    <div className="flex items-center space-x-1">
+                                      <MapPin className="w-4 h-4" />
+                                      <span className="truncate">{activity.location}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                {activity.tips && (
+                                  <div className="mt-2 text-xs text-blue-600 bg-blue-50 p-2 rounded print:text-sm">
+                                    💡 {activity.tips}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Meals */}
-                  {day.meals && day.meals.length > 0 && (
-                    <div className="mb-6">
-                      <h4 className="font-semibold text-lg mb-3">🍽️ Meal Recommendations</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {day.meals.map((meal: any, mealIndex: number) => (
-                          <div key={mealIndex} className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-400">
-                            <h5 className="font-medium text-gray-900 capitalize">
-                              {meal.meal}: {meal.restaurant || meal.name}
-                            </h5>
-                            {meal.cuisine && (
-                              <p className="text-orange-600 text-sm font-medium">{meal.cuisine}</p>
-                            )}
-                            {meal.description && (
-                              <p className="text-gray-600 text-sm mt-1">{meal.description}</p>
-                            )}
-                            {meal.cost && (
-                              <p className="text-green-600 text-sm font-medium mt-1">{meal.cost}</p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Transportation & Budget */}
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {day.transportation && (
-                      <div className="bg-blue-50 p-4 rounded-lg">
-                        <h4 className="font-semibold text-lg mb-2 flex items-center">
-                          <span className="mr-2">🚗</span>
-                          Transportation
-                        </h4>
-                        <p className="text-gray-600">{day.transportation}</p>
+                          ))}
+                        </div>
                       </div>
                     )}
-                    {day.estimatedCost && (
-                      <div className="bg-green-50 p-4 rounded-lg">
-                        <h4 className="font-semibold text-lg mb-2 flex items-center">
-                          <DollarSign className="w-5 h-5 mr-2 text-green-600" />
-                          Daily Budget
-                        </h4>
-                        <p className="text-green-600 font-bold text-xl">{day.estimatedCost}</p>
+
+                    {/* Meals */}
+                    {day.meals && day.meals.length > 0 && (
+                      <div className="mb-6">
+                        <h4 className="font-semibold text-lg mb-3">🍽️ Meal Recommendations</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 print:grid-cols-1">
+                          {day.meals.map((meal: any, mealIndex: number) => (
+                            <div key={mealIndex} className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-400 print:border-l-2 print:p-3">
+                              <h5 className="font-medium text-gray-900 capitalize">
+                                {meal.meal}: {meal.restaurant || meal.name}
+                              </h5>
+                              {meal.cuisine && (
+                                <p className="text-orange-600 text-sm font-medium">{meal.cuisine}</p>
+                              )}
+                              {meal.description && (
+                                <p className="text-gray-600 text-sm mt-1">{meal.description}</p>
+                              )}
+                              {meal.cost && (
+                                <p className="text-green-600 text-sm font-medium mt-1">{meal.cost}</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
-                  </div>
-                </CardContent>
-              </Card>
+
+                    {/* Transportation & Budget */}
+                    <div className="grid md:grid-cols-2 gap-4 print:grid-cols-1 print:gap-2">
+                      {day.transportation && (
+                        <div className="bg-blue-50 p-4 rounded-lg print:p-3">
+                          <h4 className="font-semibold text-lg mb-2 flex items-center print:text-base">
+                            <span className="mr-2">🚗</span>
+                            Transportation
+                          </h4>
+                          <p className="text-gray-600 print:text-sm">{day.transportation}</p>
+                        </div>
+                      )}
+                      {day.estimatedCost && (
+                        <div className="bg-green-50 p-4 rounded-lg print:p-3">
+                          <h4 className="font-semibold text-lg mb-2 flex items-center print:text-base">
+                            <DollarSign className="w-5 h-5 mr-2 text-green-600" />
+                            Daily Budget
+                          </h4>
+                          <p className="text-green-600 font-bold text-xl print:text-lg">{day.estimatedCost}</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             ))}
           </div>
         )}
 
         {/* Additional Information */}
-        <div ref={additionalRef} className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
-          {/* Packing List */}
-          {data.packingList && data.packingList.length > 0 && (
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <span>🎒</span>
-                  <span>Packing List</span>
-                </CardTitle>
-                <CardDescription>
-                  Essential items for your trip
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 gap-2">
-                  {data.packingList.map((item: string, index: number) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                      <span className="text-gray-700">{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+        {(data.packingList || data.tips || data.budgetBreakdown) && (
+          <div ref={additionalRef} className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8 print:grid-cols-1 print:gap-4">
+            {/* Packing List */}
+            {data.packingList && data.packingList.length > 0 && (
+              <Card className="shadow-lg print:shadow-none">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2 print:space-x-1">
+                    <span>🎒</span>
+                    <span>Packing List</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Essential items for your trip
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 gap-2 print:gap-1">
+                    {data.packingList.map((item: string, index: number) => (
+                      <div key={index} className="flex items-center space-x-2 print:space-x-1">
+                        <div className="w-2 h-2 bg-blue-600 rounded-full print:w-1 print:h-1"></div>
+                        <span className="text-gray-700 print:text-sm">{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-          {/* Travel Tips */}
-          {data.tips && data.tips.length > 0 && (
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <span>💡</span>
-                  <span>Travel Tips</span>
-                </CardTitle>
-                <CardDescription>
-                  Helpful advice for your journey
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {data.tips.map((tip: string, index: number) => (
-                    <div key={index} className="bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400">
-                      <p className="text-gray-700 text-sm">{tip}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+            {/* Travel Tips */}
+            {data.tips && data.tips.length > 0 && (
+              <Card className="shadow-lg print:shadow-none">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2 print:space-x-1">
+                    <span>💡</span>
+                    <span>Travel Tips</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Helpful advice for your journey
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3 print:space-y-2">
+                    {data.tips.map((tip: string, index: number) => (
+                      <div key={index} className="bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400 print:border-l-2 print:p-2">
+                        <p className="text-gray-700 text-sm print:text-xs">{tip}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-          {/* Budget Breakdown */}
-          {data.budgetBreakdown && (
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <DollarSign className="w-5 h-5" />
-                  <span>Budget Breakdown</span>
-                </CardTitle>
-                <CardDescription>
-                  Estimated costs for your trip
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {Object.entries(data.budgetBreakdown).map(([category, amount]: [string, any]) => (
-                    <div key={category} className="text-center p-4 bg-green-50 rounded-lg">
-                      <div className="text-2xl font-bold text-green-600">{amount}</div>
-                      <div className="text-sm text-gray-600 capitalize">{category}</div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+            {/* Budget Breakdown */}
+            {data.budgetBreakdown && (
+              <Card className="shadow-lg print:shadow-none">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2 print:space-x-1">
+                    <DollarSign className="w-5 h-5" />
+                    <span>Budget Breakdown</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Estimated costs for your trip
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 print:grid-cols-2 print:gap-2">
+                    {Object.entries(data.budgetBreakdown).map(([category, amount]: [string, any]) => (
+                      <div key={category} className="text-center p-4 bg-green-50 rounded-lg print:p-2">
+                        <div className="text-2xl font-bold text-green-600 print:text-xl">{amount}</div>
+                        <div className="text-sm text-gray-600 capitalize print:text-xs">{category}</div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* CTA Section - Non-Printable */}
+        <div className="print:hidden">
+          <Card className="shadow-lg border-0 mt-12 bg-gradient-to-r from-blue-600 to-orange-600">
+            <CardContent className="text-center py-12">
+              <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">
+                Ready to make this trip happen?
+              </h3>
+              <p className="text-blue-100 text-lg mb-8 max-w-2xl mx-auto">
+                Your personalized itinerary is ready! Download it, share it with travel companions, or make adjustments to fit your style.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button onClick={downloadPDF} size="lg" className="bg-white text-blue-600 hover:bg-gray-50">
+                  Download Full Itinerary
+                </Button>
+                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10" onClick={() => navigate('/')}>
+                  Plan Another Trip
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-
-        {/* CTA Section */}
-        <Card ref={ctaRef} className="shadow-lg border-0 mt-12 bg-gradient-to-r from-blue-600 to-orange-600">
-          <CardContent className="text-center py-12">
-            <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">
-              Ready to make this trip happen?
-            </h3>
-            <p className="text-blue-100 text-lg mb-8 max-w-2xl mx-auto">
-              Your personalized itinerary is ready! Download it, share it with travel companions, or make adjustments to fit your style.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button onClick={downloadPDF} size="lg" className="bg-white text-blue-600 hover:bg-gray-50">
-                Download Full Itinerary
-              </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10" onClick={() => navigate('/')}>
-                Plan Another Trip
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
