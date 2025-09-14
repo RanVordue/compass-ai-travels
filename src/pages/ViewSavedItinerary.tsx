@@ -430,14 +430,24 @@ const ViewSavedItinerary: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {Object.entries(data.budgetBreakdown).map(([category, amount]: [string, any]) => (
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  <div className="grid grid-cols-2 bg-gray-100 text-gray-700 font-semibold text-sm">
+                    <div className="p-3 border-b border-r border-gray-200">Category</div>
+                    <div className="p-3 border-b border-gray-200 text-right">Amount</div>
+                  </div>
+                  {Object.entries(data.budgetBreakdown).map(([category, amount]: [string, any], index: number) => (
                     <div
                       key={category}
-                      className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200 hover:shadow-md transition-all duration-200"
+                      className={`grid grid-cols-2 text-sm ${
+                        index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                      } ${index < Object.entries(data.budgetBreakdown).length - 1 ? 'border-b border-gray-200' : ''}`}
                     >
-                      <div className="text-2xl font-bold text-green-700 mb-1">{amount}</div>
-                      <div className="text-sm font-medium text-green-600 capitalize text-center leading-tight">{category}</div>
+                      <div className="p-3 capitalize truncate border-r border-gray-200">
+                        {category}
+                      </div>
+                      <div className="p-3 text-right font-medium text-green-600 truncate">
+                        {amount}
+                      </div>
                     </div>
                   ))}
                 </div>
