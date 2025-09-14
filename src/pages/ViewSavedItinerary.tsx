@@ -77,113 +77,164 @@ const ViewSavedItinerary: React.FC = () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    let yPosition = 20;
+    let yPosition = 15;
 
-    const addSectionHeader = (text: string, y: number, isBold = true) => {
-      doc.setFontSize(16);
-      doc.setFont(undefined, isBold ? 'bold' : 'normal');
-      doc.setTextColor(0, 0, 0);
-      doc.text(text, 20, y);
-      return y + 10;
+    // Helper function to add gradient-like banner (simulated with rectangles)
+    const addGradientBanner = (y: number, height: number) => {
+      // Simulate blue to orange gradient with multiple rectangles
+      const gradientSteps = 10;
+      for (let i = 0; i < gradientSteps; i++) {
+        const blue = 72 + (i * (255 - 72) / gradientSteps);
+        const green = 94 + (i * (165 - 94) / gradientSteps);
+        const red = 255 - (i * (255 - 255) / gradientSteps);
+        doc.setFillColor(red, green, blue);
+        doc.rect(0, y + (i * height / gradientSteps), pageWidth, height / gradientSteps, 'F');
+      }
+      return y + height;
     };
 
+    // Helper for section headers
+    const addSectionHeader = (text: string, y: number, fontSize = 16, bold = true) => {
+      doc.setFontSize(fontSize);
+      doc.setFont(undefined, bold ? 'bold' : 'normal');
+      doc.setTextColor(0, 0, 0);
+      const lines = doc.splitTextToSize(text, pageWidth - 40);
+      lines.forEach((line: string) => {
+        if (y > pageHeight - 20) {
+          doc.addPage();
+          y = 15;
+        }
+        doc.text(line, 20, y);
+        y += 6;
+      });
+      return y + 5;
+    };
+
+    // Helper for day headers with banner
     const addDayHeader = (dayNum: number, date: string, theme: string, y: number) => {
-      // Day banner simulation
-      doc.setFillColor(72, 94, 255); // Blue
-      doc.setDrawColor(72, 94, 255);
-      doc.rect(15, y - 5, pageWidth - 30, 25, 'F');
+      y = addGradientBanner(y, 35);
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(14);
+      doc.setFontSize(18);
       doc.setFont(undefined, 'bold');
-      doc.text(`Day ${dayNum}`, 20, y);
-      doc.text(date, 20, y + 6);
+      doc.text(`Day ${dayNum}`, 20, y - 25);
+      doc.setFontSize(12);
+      doc.text(date, 20, y - 18);
+      
+      // Theme badge
       if (theme) {
-        doc.setFillColor(255, 165, 0); // Orange
-        doc.rect(pageWidth - 100, y - 3, 85, 18, 'F');
+        doc.setFillColor(255, 165, 0);
+        doc.rect(pageWidth - 120, y - 28, 100, 20, 'F');
         doc.setTextColor(255, 255, 255);
-        doc.text(theme, pageWidth - 95, y + 5);
+        doc.setFontSize(10);
+        const themeLines = doc.splitTextToSize(theme, 95);
+        themeLines.forEach((line: string, idx: number) => {
+          doc.text(line, pageWidth - 115, y - 25 + (idx * 4));
+        });
       }
       doc.setTextColor(0, 0, 0);
-      return y + 30;
+      doc.setFont(undefined, 'normal');
+      return y;
     };
 
+    // Helper for activity items
     const addActivity = (time: string, name: string, desc: string, duration: string, cost: string, location: string, tips: string, y: number) => {
+      // Activity card background
+      doc.setFillColor(248, 249, 250); // Light gray
+      doc.rect(15, y, pageWidth - 30, 30, 'F');
+      doc.setDrawColor(173, 216, 230); // Light blue border
+      doc.rect(15, y, pageWidth - 30, 30);
+      
       doc.setFontSize(10);
       doc.setFont(undefined, 'bold');
-      doc.text(time, 20, y);
+      doc.text(time, 20, y + 6);
       doc.setFont(undefined, 'normal');
-      doc.text(name, 35, y);
+      doc.text(name, 50, y + 6);
       doc.setFontSize(9);
-      if (desc) doc.text(desc, 35, y + 4);
-      let detailY = y + 8;
+      if (desc) {
+        const descLines = doc.splitTextToSize(desc, pageWidth - 70);
+        descLines.forEach((line: string, idx: number) => {
+          doc.text(line, 50, y + 10 + (idx * 4));
+        });
+      }
+      
+      let detailY = y + 20;
       if (duration) {
-        doc.text(`Duration: ${duration}`, 35, detailY);
-        detailY += 3;
+        doc.text(`⏰ ${duration}`, 50, detailY);
+        detailY += 4;
       }
       if (cost) {
         doc.setTextColor(0, 128, 0);
-        doc.text(`Cost: ${cost}`, 35, detailY);
+        doc.text(`💰 ${cost}`, 50, detailY);
         doc.setTextColor(0, 0, 0);
-        detailY += 3;
+        detailY += 4;
       }
       if (location) {
-        doc.text(`Location: ${location}`, 35, detailY);
-        detailY += 3;
+        doc.text(`📍 ${location}`, 50, detailY);
+        detailY += 4;
       }
       if (tips) {
         doc.setTextColor(30, 144, 255);
-        doc.text(`💡 ${tips}`, 35, detailY);
+        doc.text(`💡 ${tips}`, 50, detailY);
         doc.setTextColor(0, 0, 0);
       }
-      return y + 20;
+      return y + 35;
     };
 
-    const addMealCard = (mealType: string, restaurant: string, desc: string, cuisine: string, cost: string, y: number, isLeft = true) => {
-      const x = isLeft ? 20 : 120;
-      doc.setFillColor(255, 165, 0, 0.2); // Light orange
-      doc.rect(x, y, 90, 25, 'F');
-      doc.setDrawColor(255, 165, 0);
-      doc.rect(x, y, 90, 25);
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(10);
+    // Helper for meal cards
+    const addMealCard = (mealType: string, restaurant: string, desc: string, cuisine: string, cost: string, y: number) => {
+      doc.setFillColor(255, 228, 196); // Light orange
+      doc.rect(20, y, 80, 40, 'F');
+      doc.setDrawColor(255, 140, 0); // Orange border
+      doc.rect(20, y, 80, 40);
+      
+      doc.setFontSize(11);
       doc.setFont(undefined, 'bold');
-      doc.text(`${mealType}: ${restaurant}`, x + 2, y + 5);
+      doc.text(`${mealType}: ${restaurant}`, 22, y + 8);
       doc.setFont(undefined, 'normal');
       doc.setFontSize(9);
-      if (cuisine) doc.text(cuisine, x + 2, y + 10);
-      if (desc) doc.text(desc, x + 2, y + 13);
+      if (cuisine) doc.text(cuisine, 22, y + 15);
+      if (desc) {
+        const descLines = doc.splitTextToSize(desc, 75);
+        descLines.forEach((line: string, idx: number) => {
+          doc.text(line, 22, y + 20 + (idx * 4));
+        });
+      }
       doc.setTextColor(0, 128, 0);
-      doc.text(cost, x + 88, y + 20, { align: 'right' });
+      doc.text(cost, 95, y + 35, { align: 'right' });
       doc.setTextColor(0, 0, 0);
-      return y + 30;
+      return y + 45;
     };
 
-    const addBudgetCard = (label: string, amount: string, y: number, color: string) => {
+    // Helper for budget/transport cards
+    const addInfoCard = (icon: string, title: string, content: string, color: string, y: number, width = 80) => {
       const rgb = color === 'green' ? [0, 128, 0] : [30, 144, 255];
-      doc.setFillColor(rgb[0], rgb[1], rgb[2], 0.2);
-      doc.rect(20, y, 90, 20, 'F');
+      doc.setFillColor(rgb[0], rgb[1], rgb[2], 0.1);
+      doc.rect(20, y, width, 25, 'F');
       doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
-      doc.rect(20, y, 90, 20);
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(10);
+      doc.rect(20, y, width, 25);
+      
+      doc.setFontSize(11);
       doc.setFont(undefined, 'bold');
-      doc.text(label, 22, y + 8);
-      doc.setFontSize(14);
-      doc.setTextColor(rgb[0], rgb[1], rgb[2]);
-      doc.text(amount, 105, y + 15, { align: 'right' });
-      doc.setTextColor(0, 0, 0);
-      return y + 25;
+      doc.text(`${icon} ${title}`, 22, y + 8);
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(10);
+      const contentLines = doc.splitTextToSize(content, width - 10);
+      contentLines.forEach((line: string, idx: number) => {
+        doc.text(line, 22, y + 14 + (idx * 4));
+      });
+      return y + 30;
     };
 
     const data = itinerary.itinerary_data;
 
-    // Header
-    yPosition = addSectionHeader(`${data.destination} Travel Itinerary`, yPosition, true);
+    // Main Header
+    doc.setFontSize(24);
+    doc.setFont(undefined, 'bold');
+    doc.text(data.destination, pageWidth / 2, 20, { align: 'center' });
+    yPosition += 15;
     doc.setFontSize(12);
-    doc.text(`Duration: ${data.duration} days`, 20, yPosition);
-    yPosition += 6;
-    doc.text(`Budget: ${data.totalBudget}`, 20, yPosition);
-    yPosition += 20;
+    doc.text(`Duration: ${data.duration} days • Budget: ${data.totalBudget}`, pageWidth / 2, yPosition, { align: 'center' });
+    yPosition += 25;
 
     // Days
     if (data.days || data.dailyItinerary) {
@@ -192,10 +243,13 @@ const ViewSavedItinerary: React.FC = () => {
         const dayNum = day.day || index + 1;
         const date = day.date || '';
         const theme = day.theme || '';
+
         yPosition = addDayHeader(dayNum, date, theme, yPosition);
 
-        // Daily Schedule
-        yPosition = addSectionHeader('Daily Schedule', yPosition);
+        // Daily Schedule Header
+        yPosition = addSectionHeader('Daily Schedule', yPosition, 14);
+
+        // Activities
         if (day.activities) {
           day.activities.forEach((activity: any) => {
             yPosition = addActivity(
@@ -208,84 +262,86 @@ const ViewSavedItinerary: React.FC = () => {
               activity.tips || '',
               yPosition
             );
-            if (yPosition > pageHeight - 30) {
+            if (yPosition > pageHeight - 40) {
               doc.addPage();
-              yPosition = 20;
+              yPosition = 15;
             }
           });
         }
 
+        // Meal Recommendations Header
+        yPosition = addSectionHeader('🍽️ Meal Recommendations', yPosition, 14);
+
         // Meals
-        yPosition = addSectionHeader('Meal Recommendations', yPosition);
         if (day.meals && day.meals.length > 0) {
-          day.meals.forEach((meal: any, mIndex: number) => {
+          day.meals.forEach((meal: any) => {
             yPosition = addMealCard(
               meal.meal || '',
-              meal.restaurant || meal.name || '',
+              meal.restaurant || meal.suggestion || '',
               meal.description || '',
               meal.cuisine || '',
               meal.cost || '',
-              yPosition,
-              mIndex % 2 === 0
+              yPosition
             );
+            if (yPosition > pageHeight - 40) {
+              doc.addPage();
+              yPosition = 15;
+            }
           });
         }
 
         // Transportation & Budget
-        if (day.transportation || day.estimatedCost) {
-          let budgetY = yPosition;
-          if (day.transportation) {
-            budgetY = addBudgetCard('Transportation', day.transportation, yPosition, 'blue');
-            yPosition += 25;
-          }
-          if (day.estimatedCost) {
-            yPosition = addBudgetCard('Daily Budget', day.estimatedCost, budgetY, 'green');
-          }
-          yPosition += 10;
+        yPosition = addSectionHeader('Transportation & Budget', yPosition, 14);
+        if (day.transportation) {
+          yPosition = addInfoCard('🚗', 'Transportation', day.transportation, 'blue', yPosition);
         }
+        if (day.estimatedCost) {
+          yPosition = addInfoCard('💰', 'Daily Budget', day.estimatedCost, 'green', yPosition);
+        }
+        yPosition += 10;
 
         if (yPosition > pageHeight - 30) {
           doc.addPage();
-          yPosition = 20;
+          yPosition = 15;
         }
       });
     }
 
     // Additional Sections
     if (data.packingList) {
-      yPosition = addSectionHeader('Packing List', yPosition, true);
+      yPosition = addSectionHeader('🎒 Packing List', yPosition, 16, true);
       data.packingList.forEach((item: string) => {
-        doc.setFontSize(10);
+        doc.setFontSize(11);
         doc.text(`• ${item}`, 20, yPosition);
-        yPosition += 5;
+        yPosition += 6;
       });
       yPosition += 10;
     }
 
     if (data.tips) {
-      yPosition = addSectionHeader('Travel Tips', yPosition, true);
+      yPosition = addSectionHeader('💡 Travel Tips', yPosition, 16, true);
       data.tips.forEach((tip: string) => {
-        doc.setFontSize(10);
+        doc.setFontSize(11);
         doc.text(`• ${tip}`, 20, yPosition);
-        yPosition += 5;
+        yPosition += 6;
       });
       yPosition += 10;
     }
 
     if (data.budgetBreakdown) {
-      yPosition = addSectionHeader('Budget Breakdown', yPosition, true);
-      Object.entries(data.budgetBreakdown).forEach(([category, amount]) => {
-        doc.setFontSize(10);
-        doc.text(`${category}: ${amount as string}`, 20, yPosition);
-        yPosition += 5;
+      yPosition = addSectionHeader('💰 Budget Breakdown', yPosition, 16, true);
+      Object.entries(data.budgetBreakdown).forEach(([category, amount]: [string, any]) => {
+        doc.setFontSize(11);
+        doc.text(`${category}: ${amount}`, 20, yPosition);
+        yPosition += 6;
       });
     }
 
     doc.save(`${data.destination.replace(/\s+/g, '_')}_Itinerary.pdf`);
     
     toast({
-      title: "Downloaded",
-      description: "Your itinerary has been downloaded as a PDF.",
+      title: "PDF Downloaded!",
+      description: "Your itinerary has been saved as a PDF.",
     });
   };
 
