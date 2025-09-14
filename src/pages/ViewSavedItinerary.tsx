@@ -430,14 +430,14 @@ const ViewSavedItinerary: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {Object.entries(data.budgetBreakdown).map(([category, amount]: [string, any]) => (
                     <div
                       key={category}
-                      className="flex flex-col justify-center items-center h-32 p-3 bg-green-50 rounded-lg border border-green-100 shadow-sm"
+                      className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200 hover:shadow-md transition-all duration-200"
                     >
-                      <div className="text-3xl font-bold text-green-600 mb-2">{amount}</div>
-                      <div className="text-base text-gray-600 capitalize text-center">{category}</div>
+                      <div className="text-2xl font-bold text-green-700 mb-1">{amount}</div>
+                      <div className="text-sm font-medium text-green-600 capitalize text-center leading-tight">{category}</div>
                     </div>
                   ))}
                 </div>
