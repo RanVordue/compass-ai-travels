@@ -92,7 +92,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   };
   
   // Handle selecting a suggestion
-  const handleSelectSuggestion = (place: any, event?: React.MouseEvent) => {
+  const handleSelectSuggestion = (place: any) => {
     // Prevent click event from bubbling to handleClickOutside
     if (event) {
       event.stopPropagation();
@@ -117,7 +117,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   // Handle clicks outside to close suggestions
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (inputRef.current && !inputRef.current.contains(event.target as Node)) {
+     if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setShowSuggestions(false);
       }
     };
@@ -126,7 +126,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   }, []);
 
   const interests = [
-    'Food & Dining', 'Art & Museums', 'History & Culture', 'Nightlife', 
+    'Food & Dining', 'Art & Museums', 'History & Culture', 'Nightlife',
     'Shopping', 'Nature & Outdoors', 'Adventure Sports', 'Photography',
     'Architecture', 'Local Markets', 'Music & Entertainment', 'Wellness & Spa'
   ];
@@ -134,7 +134,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   const handleInterestChange = (interest: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
-      interests: checked 
+      interests: checked
         ? [...prev.interests, interest]
         : prev.interests.filter(i => i !== interest)
     }));
@@ -233,7 +233,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
                     Where are you going?
                   </Label>
 
-                  <div className="relative">
+                  <div ref={containerRef} className="relative">
                     <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="destination"
@@ -242,37 +242,36 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
                       onChange={handleDestinationChange}
                       onFocus={handleInputFocus}
                       className="mt-2 text-lg p-4 pl-10"
-                      ref={inputRef}
                     />
                   </div>
                   {showSuggestions && suggestions.length > 0 && (
-                    <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                      {suggestions.map((place, index) => (
-                        <div
-                          key={index}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                          onClick={(e) => handleSelectSuggestion(place, e)}
-                          tabIndex={0}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleSelectSuggestion(place);
-                          }}
-                        >
-                          <p className="text-sm font-medium">
-                            {place.city || place.name || ''}, {place.country}
-                            {place.state ? `, ${place.state}` : ''}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {place.formatted}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {isFetching && (
-                    <div className="absolute right-3 top-3">
-                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-600"></div>
-                    </div>
-                  )}
+                      <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                        {suggestions.map((place, index) => (
+                          <div
+                            key={index}
+                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                            onClick={() => handleSelectSuggestion(place)}
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSelectSuggestion(place);
+                            }}
+                          >
+                            <p className="text-sm font-medium">
+                              {place.city || place.name || ''}, {place.country}
+                              {place.state ? `, ${place.state}` : ''}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {place.formatted}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {isFetching && (
+                      <div className="absolute right-3 top-3">
+                        <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-600"></div>
+                      </div>
+                    )}
                 </div>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
