@@ -80,7 +80,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
     }
   };
 
-  const debouncedFetchSuggestions =  React.useRef(debounce(fetchSuggestions, 300)).current;
+  const debouncedFetchSuggestions = React.useRef(debounce(fetchSuggestions, 300)).current;
 
   // Handle input focus to show cached suggestions
   const handleInputFocus = () => {
@@ -92,7 +92,11 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   };
   
   // Handle selecting a suggestion
-  const handleSelectSuggestion = (place: any) => {
+  const handleSelectSuggestion = (place: any, event?: React.MouseEvent) => {
+    // Prevent click event from bubbling to handleClickOutside
+    if (event) {
+      event.stopPropagation();
+    }
     const placeName = `${place.city || place.name || ''}, ${place.country} ${place.state ? `, ${place.state}` : ''}`.trim();
     setFormData(prev => ({
       ...prev,
@@ -247,7 +251,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
                         <div
                           key={index}
                           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                          onClick={() => handleSelectSuggestion(place)}
+                          onClick={(e) => handleSelectSuggestion(place, e)}
                           tabIndex={0}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') handleSelectSuggestion(place);
