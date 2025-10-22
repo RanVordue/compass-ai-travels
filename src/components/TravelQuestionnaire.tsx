@@ -94,7 +94,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   
   // Handle selecting a suggestion
   const handleSelectSuggestion = (place: any) => {
-    const placeName = `${place.city || place.name || ''}, ${place.country}${place.state ? `, ${place.state}` : ''}`.replace(/^,\s*/, '').trim();
+    const placeName = `${place.city || place.name || ''}, ${place.country}${place.state ?`, ${place.state}` : ''}`.replace(/^,\s*/, '').trim();
     console.log('Selected suggestion:', placeName);
     setFormData(prev => ({
       ...prev,
@@ -109,7 +109,11 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   // Handle input change for destination
   const handleDestinationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setFormData(prev => ({ ...prev, destination: value, destinationSelected: false  }));
+    setFormData(prev => ({
+      ...prev,
+      destination: value,
+      destinationSelected: false
+    }));
     debouncedFetchSuggestions(value);
   };
 
