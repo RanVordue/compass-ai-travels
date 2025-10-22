@@ -146,11 +146,50 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
+  
+  const validateDates = () => {
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0); // Normalize to start of day
+    const start = new Date(formData.startDate);
+    const end = new Date(formData.endDate);
 
+    if (formData.startDate && start < currentDate) {
+      toast({
+        title: "Invalid Start Date",
+        description: "Start date must be today or in the future.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    if (formData.endDate && end < currentDate) {
+      toast({
+        title: "Invalid End Date",
+        description: "End date must be today or in the future.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    if (formData.startDate && formData.endDate && end < start) {
+      toast({
+        title: "Invalid Date Range",
+        description: "End date must be the same as or after the start date.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    return true;
+  };
+  
   const nextStep = () => {
     if (currentStep < 3) {
+      if (currentStep === 0 && !validateDates())
+      {
+        return;
+      }
       setCurrentStep(currentStep + 1);
-    } else {
+    }
+    else
+    {
       onComplete(formData);
     }
   };
