@@ -91,7 +91,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
       setShowSuggestions(true);
     }
   };
-  
+
   // Handle selecting a suggestion
   const handleSelectSuggestion = (place: any) => {
     const placeName = `${place.city || place.name || ''}, ${place.country}${place.state ?`, ${place.state}` : ''}`.replace(/^,\s*/, '').trim();
@@ -146,7 +146,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
-  
+
   const validateDates = () => {
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0); // Normalize to start of day
@@ -179,7 +179,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
     }
     return true;
   };
-  
+
   const nextStep = () => {
     if (currentStep < 3) {
       if (currentStep === 0 && !validateDates())
