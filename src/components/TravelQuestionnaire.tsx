@@ -243,7 +243,6 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
                       onFocus={handleInputFocus}
                       className="mt-2 text-lg p-4 pl-10"
                     />
-                  </div>
                   {showSuggestions && suggestions.length > 0 && (
                       <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
                         {suggestions.map((place, index) => (
@@ -272,6 +271,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
                         <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-600"></div>
                       </div>
                     )}
+                  </div>
                 </div>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
