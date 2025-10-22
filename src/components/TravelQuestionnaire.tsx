@@ -161,18 +161,18 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
       });
       return false;
     }
-    if (formData.endDate && end < currentDate) {
-      toast({
-        title: "Invalid End Date",
-        description: "End date must be today or in the future.",
-        variant: "destructive",
-      });
-      return false;
-    }
     if (formData.startDate && formData.endDate && end < start) {
       toast({
         title: "Invalid Date Range",
         description: "End date must be the same as or after the start date.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    if (formData.endDate && end < currentDate) {
+      toast({
+        title: "Invalid End Date",
+        description: "End date must be today or in the future.",
         variant: "destructive",
       });
       return false;
