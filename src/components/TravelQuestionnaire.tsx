@@ -21,6 +21,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({
     destination: '',
+    destinationSelected: false,
     startDate: '',
     endDate: '',
     budget: '',
@@ -93,14 +94,12 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   
   // Handle selecting a suggestion
   const handleSelectSuggestion = (place: any) => {
-    // Prevent click event from bubbling to handleClickOutside
-    if (event) {
-      event.stopPropagation();
-    }
-    const placeName = `${place.city || place.name || ''}, ${place.country} ${place.state ? `, ${place.state}` : ''}`.trim();
+    const placeName = `${place.city || place.name || ''}, ${place.country}${place.state ? `, ${place.state}` : ''}`.replace(/^,\s*/, '').trim();
+    console.log('Selected suggestion:', placeName);
     setFormData(prev => ({
       ...prev,
-      destination: placeName
+      destination: placeName,
+      destinationSelected: true
     }));
     setSuggestions([]);
     setPreviousQuery('');
@@ -110,14 +109,14 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   // Handle input change for destination
   const handleDestinationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setFormData(prev => ({ ...prev, destination: value }));
+    setFormData(prev => ({ ...prev, destination: value, destinationSelected: false  }));
     debouncedFetchSuggestions(value);
   };
 
   // Handle clicks outside to close suggestions
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-     if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setShowSuggestions(false);
       }
     };
@@ -182,7 +181,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
   const isStepComplete = () => {
     switch (currentStep) {
       case 0:
-        return formData.destination && formData.startDate && formData.endDate;
+        return formData.destination && formData.destinationSelected && formData.startDate && formData.endDate;
       case 1:
         return formData.budget && formData.groupSize && formData.pace;
       case 2:
@@ -243,7 +242,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
                       onFocus={handleInputFocus}
                       className="mt-2 text-lg p-4 pl-10"
                     />
-                  {showSuggestions && suggestions.length > 0 && (
+                    {showSuggestions && suggestions.length > 0 && (
                       <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
                         {suggestions.map((place, index) => (
                           <div
