@@ -10,7 +10,6 @@ import { useToast } from "@/components/ui/use-toast";
 import Header from "@/components/Header";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { DayCard } from "@/components/DayCard";
 
 interface SavedItinerary {
   id: string;
@@ -242,11 +241,127 @@ const ViewSavedItinerary: React.FC = () => {
         {(data.days || data.dailyItinerary) && (
           <div className="space-y-8">
             {(data.days || data.dailyItinerary).map((day: any, index: number) => (
-              <DayCard
-                key={day.day || index}
-                day={day}
-                refCallback={(el) => (daysRef.current[index] = el)}
-              />
+              <Card key={day.day || index} ref={(el) => (daysRef.current[index] = el)} className="shadow-lg border-0 overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-blue-600 to-orange-600 text-white">
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                        <span className="font-bold text-lg">{day.day || index + 1}</span>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold">Day {day.day || index + 1}</h3>
+                        {day.date && <p className="text-blue-100">{day.date}</p>}
+                      </div>
+                    </div>
+                    {day.theme && (
+                      <Badge variant="secondary" className="bg-white/20 text-white border-0">
+                        {day.theme}
+                      </Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  {/* Activities */}
+                  {day.activities && day.activities.length > 0 && (
+                    <div className="mb-6">
+                      <h4 className="font-semibold text-lg mb-3 flex items-center">
+                        <Clock className="w-5 h-5 mr-2 text-blue-600" />
+                        Daily Schedule
+                      </h4>
+                      <div className="space-y-4">
+                        {day.activities.map((activity: any, actIndex: number) => (
+                          <div key={actIndex} className="flex flex-col sm:flex-row items-start space-y-2 sm:space-y-0 sm:space-x-3 p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500">
+                            {activity.time && (
+                              <div className="text-sm text-gray-600 font-medium sm:min-w-[80px] whitespace-nowrap">
+                                {activity.time}
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0 w-full">
+                              <h5 className="font-medium text-gray-900 mb-1 break-words">
+                                {activity.name || activity.title}
+                              </h5>
+                              {activity.description && (
+                                <p className="text-gray-600 text-sm mb-2 break-words">{activity.description}</p>
+                              )}
+                              <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-600">
+                                {activity.duration && (
+                                  <div className="flex items-center space-x-1 whitespace-nowrap">
+                                    <Clock className="w-4 h-4 flex-shrink-0" />
+                                    <span>{activity.duration}</span>
+                                  </div>
+                                )}
+                                {activity.cost && (
+                                  <div className="text-green-600 font-medium whitespace-nowrap">
+                                    {activity.cost}
+                                  </div>
+                                )}
+                                {activity.location && (
+                                  <div className="flex items-center space-x-1 min-w-0">
+                                    <MapPin className="w-4 h-4 flex-shrink-0" />
+                                    <span className="break-words">{activity.location}</span>
+                                  </div>
+                                )}
+                              </div>
+                              {activity.tips && (
+                                <div className="mt-2 text-xs text-blue-600 bg-blue-50 p-2 rounded break-words">
+                                  💡 {activity.tips}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Meals */}
+                  {day.meals && day.meals.length > 0 && (
+                    <div className="mb-6">
+                      <h4 className="font-semibold text-lg mb-3">🍽️ Meal Recommendations</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {day.meals.map((meal: any, mealIndex: number) => (
+                          <div key={mealIndex} className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-400 min-w-0">
+                            <h5 className="font-medium text-gray-900 capitalize break-words">
+                              {meal.meal}: {meal.restaurant || meal.name}
+                            </h5>
+                            {meal.cuisine && (
+                              <p className="text-orange-600 text-sm font-medium break-words">{meal.cuisine}</p>
+                            )}
+                            {meal.description && (
+                              <p className="text-gray-600 text-sm mt-1 break-words">{meal.description}</p>
+                            )}
+                            {meal.cost && (
+                              <p className="text-green-600 text-sm font-medium mt-1 whitespace-nowrap">{meal.cost}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Transportation & Budget */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {day.transportation && (
+                      <div className="bg-blue-50 p-4 rounded-lg min-w-0">
+                        <h4 className="font-semibold text-lg mb-2 flex items-center">
+                          <span className="mr-2">🚗</span>
+                          Transportation
+                        </h4>
+                        <p className="text-gray-600 break-words">{day.transportation}</p>
+                      </div>
+                    )}
+                    {day.estimatedCost && (
+                      <div className="bg-green-50 p-4 rounded-lg">
+                        <h4 className="font-semibold text-lg mb-2 flex items-center">
+                          <DollarSign className="w-5 h-5 mr-2 text-green-600" />
+                          Daily Budget
+                        </h4>
+                        <p className="text-green-600 font-bold text-xl">{day.estimatedCost}</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}
