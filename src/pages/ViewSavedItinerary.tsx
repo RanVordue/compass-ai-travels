@@ -221,16 +221,16 @@ const ViewSavedItinerary: React.FC = () => {
           </div>
 
           <div ref={headerRef} className="text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4 break-words px-4">
               {data.destination}
             </h1>
-            <div className="flex justify-center space-x-6 text-gray-600">
-              <div className="flex items-center space-x-2">
-                <Calendar className="w-5 h-5" />
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6 text-gray-600 px-4">
+              <div className="flex items-center space-x-2 whitespace-nowrap">
+                <Calendar className="w-5 h-5 flex-shrink-0" />
                 <span>{data.duration} days</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <DollarSign className="w-5 h-5" />
+              <div className="flex items-center space-x-2 whitespace-nowrap">
+                <DollarSign className="w-5 h-5 flex-shrink-0" />
                 <span>{data.totalBudget}</span>
               </div>
             </div>
@@ -270,40 +270,40 @@ const ViewSavedItinerary: React.FC = () => {
                       </h4>
                       <div className="space-y-4">
                         {day.activities.map((activity: any, actIndex: number) => (
-                          <div key={actIndex} className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500">
+                          <div key={actIndex} className="flex flex-col sm:flex-row items-start space-y-2 sm:space-y-0 sm:space-x-3 p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500">
                             {activity.time && (
-                              <div className="text-sm text-gray-600 font-medium min-w-[80px]">
+                              <div className="text-sm text-gray-600 font-medium sm:min-w-[80px] whitespace-nowrap">
                                 {activity.time}
                               </div>
                             )}
-                            <div className="flex-1">
-                              <h5 className="font-medium text-gray-900 mb-1">
+                            <div className="flex-1 min-w-0 w-full">
+                              <h5 className="font-medium text-gray-900 mb-1 break-words">
                                 {activity.name || activity.title}
                               </h5>
                               {activity.description && (
-                                <p className="text-gray-600 text-sm mb-2">{activity.description}</p>
+                                <p className="text-gray-600 text-sm mb-2 break-words">{activity.description}</p>
                               )}
-                              <div className="flex items-center space-x-4 text-sm text-gray-600">
+                              <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-600">
                                 {activity.duration && (
-                                  <div className="flex items-center space-x-1">
-                                    <Clock className="w-4 h-4" />
+                                  <div className="flex items-center space-x-1 whitespace-nowrap">
+                                    <Clock className="w-4 h-4 flex-shrink-0" />
                                     <span>{activity.duration}</span>
                                   </div>
                                 )}
                                 {activity.cost && (
-                                  <div className="text-green-600 font-medium">
+                                  <div className="text-green-600 font-medium whitespace-nowrap">
                                     {activity.cost}
                                   </div>
                                 )}
                                 {activity.location && (
-                                  <div className="flex items-center space-x-1">
-                                    <MapPin className="w-4 h-4" />
-                                    <span className="truncate">{activity.location}</span>
+                                  <div className="flex items-center space-x-1 min-w-0">
+                                    <MapPin className="w-4 h-4 flex-shrink-0" />
+                                    <span className="break-words">{activity.location}</span>
                                   </div>
                                 )}
                               </div>
                               {activity.tips && (
-                                <div className="mt-2 text-xs text-blue-600 bg-blue-50 p-2 rounded">
+                                <div className="mt-2 text-xs text-blue-600 bg-blue-50 p-2 rounded break-words">
                                   💡 {activity.tips}
                                 </div>
                               )}
@@ -320,18 +320,18 @@ const ViewSavedItinerary: React.FC = () => {
                       <h4 className="font-semibold text-lg mb-3">🍽️ Meal Recommendations</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {day.meals.map((meal: any, mealIndex: number) => (
-                          <div key={mealIndex} className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-400">
-                            <h5 className="font-medium text-gray-900 capitalize">
+                          <div key={mealIndex} className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-400 min-w-0">
+                            <h5 className="font-medium text-gray-900 capitalize break-words">
                               {meal.meal}: {meal.restaurant || meal.name}
                             </h5>
                             {meal.cuisine && (
-                              <p className="text-orange-600 text-sm font-medium">{meal.cuisine}</p>
+                              <p className="text-orange-600 text-sm font-medium break-words">{meal.cuisine}</p>
                             )}
                             {meal.description && (
-                              <p className="text-gray-600 text-sm mt-1">{meal.description}</p>
+                              <p className="text-gray-600 text-sm mt-1 break-words">{meal.description}</p>
                             )}
                             {meal.cost && (
-                              <p className="text-green-600 text-sm font-medium mt-1">{meal.cost}</p>
+                              <p className="text-green-600 text-sm font-medium mt-1 whitespace-nowrap">{meal.cost}</p>
                             )}
                           </div>
                         ))}
@@ -342,12 +342,12 @@ const ViewSavedItinerary: React.FC = () => {
                   {/* Transportation & Budget */}
                   <div className="grid md:grid-cols-2 gap-4">
                     {day.transportation && (
-                      <div className="bg-blue-50 p-4 rounded-lg">
+                      <div className="bg-blue-50 p-4 rounded-lg min-w-0">
                         <h4 className="font-semibold text-lg mb-2 flex items-center">
                           <span className="mr-2">🚗</span>
                           Transportation
                         </h4>
-                        <p className="text-gray-600">{day.transportation}</p>
+                        <p className="text-gray-600 break-words">{day.transportation}</p>
                       </div>
                     )}
                     {day.estimatedCost && (
@@ -383,9 +383,9 @@ const ViewSavedItinerary: React.FC = () => {
               <CardContent>
                 <div className="grid grid-cols-1 gap-2">
                   {data.packingList.map((item: string, index: number) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                      <span className="text-gray-700">{item}</span>
+                    <div key={index} className="flex items-start space-x-2">
+                      <div className="w-2 h-2 bg-blue-600 rounded-full mt-1.5 flex-shrink-0"></div>
+                      <span className="text-gray-700 break-words flex-1">{item}</span>
                     </div>
                   ))}
                 </div>
@@ -408,8 +408,8 @@ const ViewSavedItinerary: React.FC = () => {
               <CardContent>
                 <div className="space-y-3">
                   {data.tips.map((tip: string, index: number) => (
-                    <div key={index} className="bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400">
-                      <p className="text-gray-700 text-sm">{tip}</p>
+                    <div key={index} className="bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400 min-w-0">
+                      <p className="text-gray-700 text-sm break-words">{tip}</p>
                     </div>
                   ))}
                 </div>

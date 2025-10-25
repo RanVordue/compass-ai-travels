@@ -320,31 +320,31 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
 
         {/* Itinerary Header */}
         <Card ref={headerRef} className="shadow-lg border-0 mb-8">
-          <CardHeader className="text-center">
-            <CardTitle className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-orange-600 bg-clip-text text-transparent">
+          <CardHeader className="text-center px-4">
+            <CardTitle className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-orange-600 bg-clip-text text-transparent break-words">
               Your {itinerary.destination} Adventure
             </CardTitle>
-            <CardDescription className="text-lg mt-4">
+            <CardDescription className="text-base sm:text-lg mt-4">
               {itinerary.duration} days of unforgettable experiences
             </CardDescription>
             {itinerary.summary && (
-              <p className="text-gray-600 mt-2 max-w-2xl mx-auto">
+              <p className="text-gray-600 mt-2 max-w-2xl mx-auto break-words">
                 {itinerary.summary}
               </p>
             )}
           </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-3 gap-6 text-center">
-              <div className="flex items-center justify-center space-x-2">
-                <Calendar className="w-5 h-5 text-blue-600" />
+          <CardContent className="px-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 text-center">
+              <div className="flex items-center justify-center space-x-2 whitespace-nowrap">
+                <Calendar className="w-5 h-5 text-blue-600 flex-shrink-0" />
                 <span className="font-medium">{itinerary.duration} Days</span>
               </div>
-              <div className="flex items-center justify-center space-x-2">
-                <DollarSign className="w-5 h-5 text-green-600" />
+              <div className="flex items-center justify-center space-x-2 whitespace-nowrap">
+                <DollarSign className="w-5 h-5 text-green-600 flex-shrink-0" />
                 <span className="font-medium">{itinerary.totalBudget}</span>
               </div>
-              <div className="flex items-center justify-center space-x-2">
-                <MapPin className="w-5 h-5 text-orange-600" />
+              <div className="flex items-center justify-center space-x-2 whitespace-nowrap">
+                <MapPin className="w-5 h-5 text-orange-600 flex-shrink-0" />
                 <span className="font-medium">{travelData.groupSize.replace('-', ' ')}</span>
               </div>
             </div>
@@ -381,22 +381,22 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
                     </h4>
                     <div className="space-y-4">
                       {day.activities?.map((activity: any, idx: number) => (
-                        <div key={idx} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                          <div className="text-sm text-gray-600 font-medium min-w-[80px]">
+                        <div key={idx} className="flex flex-col sm:flex-row items-start space-y-2 sm:space-y-0 sm:space-x-3 p-3 bg-gray-50 rounded-lg">
+                          <div className="text-sm text-gray-600 font-medium sm:min-w-[80px] whitespace-nowrap">
                             {activity.time}
                           </div>
-                          <div className="flex-1">
-                            <h5 className="font-medium text-gray-900">{activity.name}</h5>
+                          <div className="flex-1 min-w-0 w-full">
+                            <h5 className="font-medium text-gray-900 break-words">{activity.name}</h5>
                             {activity.description && (
-                              <p className="text-sm text-gray-600 mt-1">{activity.description}</p>
+                              <p className="text-sm text-gray-600 mt-1 break-words">{activity.description}</p>
                             )}
-                            <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
-                              <span>{activity.duration}</span>
-                              <span className="text-green-600 font-medium">{activity.cost}</span>
-                              {activity.location && <span>📍 {activity.location}</span>}
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-600 mt-1">
+                              <span className="whitespace-nowrap">{activity.duration}</span>
+                              <span className="text-green-600 font-medium whitespace-nowrap">{activity.cost}</span>
+                              {activity.location && <span className="break-words">📍 {activity.location}</span>}
                             </div>
                             {activity.tips && (
-                              <p className="text-xs text-blue-600 mt-1">💡 {activity.tips}</p>
+                              <p className="text-xs text-blue-600 mt-1 break-words">💡 {activity.tips}</p>
                             )}
                           </div>
                         </div>
@@ -413,18 +413,18 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
                       </h4>
                       <div className="space-y-3">
                         {day.meals?.map((meal: any, idx: number) => (
-                          <div key={idx} className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
-                            <div>
-                              <h5 className="font-medium text-gray-900">{meal.meal}</h5>
-                              <p className="text-sm text-gray-600">
+                          <div key={idx} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 p-3 bg-orange-50 rounded-lg min-w-0">
+                            <div className="flex-1 min-w-0">
+                              <h5 className="font-medium text-gray-900 break-words">{meal.meal}</h5>
+                              <p className="text-sm text-gray-600 break-words">
                                 {meal.restaurant || meal.suggestion}
                                 {meal.cuisine && ` • ${meal.cuisine}`}
                               </p>
                               {meal.description && (
-                                <p className="text-xs text-gray-500 mt-1">{meal.description}</p>
+                                <p className="text-xs text-gray-500 mt-1 break-words">{meal.description}</p>
                               )}
                             </div>
-                            <span className="text-green-600 font-medium">{meal.cost}</span>
+                            <span className="text-green-600 font-medium whitespace-nowrap">{meal.cost}</span>
                           </div>
                         ))}
                       </div>
@@ -438,9 +438,9 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
                     </div>
 
                     {day.transportation && (
-                      <div className="p-4 bg-blue-50 rounded-lg">
+                      <div className="p-4 bg-blue-50 rounded-lg min-w-0">
                         <h5 className="font-medium text-gray-900 mb-2">Transportation</h5>
-                        <p className="text-sm text-gray-600">{day.transportation}</p>
+                        <p className="text-sm text-gray-600 break-words">{day.transportation}</p>
                       </div>
                     )}
                   </div>
