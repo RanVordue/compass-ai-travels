@@ -362,7 +362,7 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
               
               {/* Ad Unit after every 2 days */}
               {(index + 1) % 2 === 0 && index !== itinerary.days.length - 1 && (
-                <AdUnit slot="9876543210" className="my-4" />
+                <AdUnit slot="2562007787" className="my-4" />
               )}
             </React.Fragment>
           ))}
