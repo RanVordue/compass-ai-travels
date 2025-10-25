@@ -170,7 +170,7 @@ const Index = () => {
 
       {/* Ad Unit 1 - Between Features and CTA */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <AdUnit slot="1234567890" />
+        <AdUnit slot="8197477842" />
       </div>
 
       {/* CTA Section */}
