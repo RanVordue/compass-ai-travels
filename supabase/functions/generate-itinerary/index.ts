@@ -80,6 +80,13 @@ Please create a comprehensive day-by-day itinerary that includes:
 5. Cultural insights and local tips
 6. Weather considerations
 7. Budget breakdown per day
+8. IMPORTANT: Booking/info links for EVERY activity, accommodation, and meal
+
+For each activity and meal, you MUST include a "link" field:
+- For hotels/accommodation: Use Booking.com search URL format: https://www.booking.com/searchresults.html?ss=HOTEL_NAME+CITY&affiliate_id=AFFILIATE_TAG
+- For restaurants: Use TripAdvisor or Google Maps search URL
+- For tours/activities that can be booked: Use GetYourGuide or Viator search URL
+- For non-bookable activities (parks, hikes, viewpoints): Use a relevant informational link (official website, Wikipedia, or tourism board page)
 
 Format the response as a JSON object with the following structure:
 {
@@ -87,6 +94,7 @@ Format the response as a JSON object with the following structure:
   "duration": number of days,
   "totalBudget": "estimated total budget range",
   "summary": "brief overview of the trip",
+  "accommodationLink": "booking.com link for hotels in destination",
   "days": [
     {
       "day": 1,
@@ -100,7 +108,9 @@ Format the response as a JSON object with the following structure:
           "description": "detailed description",
           "cost": "estimated cost",
           "location": "specific location",
-          "tips": "local tips"
+          "tips": "local tips",
+          "link": "booking or information link (REQUIRED)",
+          "linkType": "booking or info"
         }
       ],
       "meals": [
@@ -109,7 +119,9 @@ Format the response as a JSON object with the following structure:
           "restaurant": "restaurant name",
           "cuisine": "cuisine type",
           "cost": "estimated cost",
-          "description": "brief description"
+          "description": "brief description",
+          "link": "restaurant link (REQUIRED)",
+          "linkType": "booking or info"
         }
       ],
       "transportation": "daily transport recommendations",
@@ -126,7 +138,7 @@ Format the response as a JSON object with the following structure:
   }
 }
 
-Make sure the itinerary is realistic, well-researched, and tailored to the specified budget and interests.`;
+Make sure the itinerary is realistic, well-researched, and tailored to the specified budget and interests. EVERY activity and meal MUST have a valid link.`;
     // Use the updated GPT model and make the request with retry logic
     const requestBody = {
       model: 'gpt-4o-mini',
