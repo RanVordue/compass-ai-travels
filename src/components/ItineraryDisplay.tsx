@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MapPin, Clock, DollarSign, Calendar, Download, Edit, AlertCircle, Save } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, DollarSign, Calendar, Download, Edit, AlertCircle, Save, ExternalLink } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,6 +10,8 @@ import LoginModal from "./LoginModal";
 import { supabase } from "@/integrations/supabase/client";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { AdUnit } from "@/components/AdUnit";
+import { DayCard } from "@/components/DayCard";
 
 interface ItineraryDisplayProps {
   travelData: any;
@@ -26,7 +28,6 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
   const { toast } = useToast();
   const { user, loading } = useAuth();
   const headerRef = useRef<HTMLDivElement>(null);
-  const accommodationsRef = useRef<HTMLDivElement>(null);
   const daysRef = useRef<(HTMLDivElement | null)[]>([]);
   const additionalRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
@@ -99,7 +100,6 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
       // Collect sections, excluding the top button header
       const sections = [
         headerRef.current,
-        accommodationsRef.current,
         ...daysRef.current,
         additionalRef.current,
         ctaRef.current
@@ -353,158 +353,20 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
           </CardContent>
         </Card>
 
-        {/* Accommodation Recommendations */}
-        {itinerary.accommodations && itinerary.accommodations.length > 0 && (
-          <Card ref={accommodationsRef} className="shadow-lg border-0 mb-8">
-            <CardHeader>
-              <CardTitle className="text-2xl flex items-center space-x-2">
-                <span>🏨</span>
-                <span>Recommended Accommodations</span>
-              </CardTitle>
-              <CardDescription>
-                Handpicked stays based on your {travelData.accommodation} preference
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-6">
-                {itinerary.accommodations.map((accommodation: any, index: number) => (
-                  <div key={index} className="p-4 bg-gradient-to-br from-blue-50 to-orange-50 rounded-lg border border-gray-200">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-lg text-gray-900 break-words">{accommodation.name}</h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="secondary" className="text-xs">
-                            {accommodation.type}
-                          </Badge>
-                          <span className="text-sm text-gray-600">📍 {accommodation.location}</span>
-                        </div>
-                      </div>
-                      <div className="text-right ml-2">
-                        <p className="text-lg font-bold text-green-600 whitespace-nowrap">{accommodation.priceRange}</p>
-                        <p className="text-xs text-gray-500">per night</p>
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-700 mb-3 break-words">{accommodation.description}</p>
-                    {accommodation.amenities && accommodation.amenities.length > 0 && (
-                      <div className="mb-3">
-                        <p className="text-xs font-medium text-gray-600 mb-1">Amenities:</p>
-                        <div className="flex flex-wrap gap-1">
-                          {accommodation.amenities.map((amenity: string, idx: number) => (
-                            <span key={idx} className="text-xs bg-white px-2 py-1 rounded-full text-gray-600">
-                              {amenity}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {accommodation.bookingTip && (
-                      <div className="mt-3 p-2 bg-blue-100 rounded text-xs text-blue-800 break-words">
-                        💡 <strong>Tip:</strong> {accommodation.bookingTip}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Daily Itinerary */}
         <div className="space-y-8">
           {itinerary.days?.map((day: any, index: number) => (
-            <Card key={day.day} ref={(el) => daysRef.current[index] = el} className="shadow-lg border-0 overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-blue-600 to-orange-600 text-white">
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                      <span className="font-bold text-lg">{day.day}</span>
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold">Day {day.day}</h3>
-                      <p className="text-blue-100">{day.date}</p>
-                    </div>
-                  </div>
-                  <Badge variant="secondary" className="bg-white/20 text-white border-0">
-                    {day.theme}
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="grid lg:grid-cols-2 gap-8">
-                  {/* Activities */}
-                  <div>
-                    <h4 className="text-lg font-semibold mb-4 flex items-center space-x-2">
-                      <Clock className="w-5 h-5 text-blue-600" />
-                      <span>Daily Schedule</span>
-                    </h4>
-                    <div className="space-y-4">
-                      {day.activities?.map((activity: any, idx: number) => (
-                        <div key={idx} className="flex flex-col sm:flex-row items-start space-y-2 sm:space-y-0 sm:space-x-3 p-3 bg-gray-50 rounded-lg">
-                          <div className="text-sm text-gray-600 font-medium sm:min-w-[80px] whitespace-nowrap">
-                            {activity.time}
-                          </div>
-                          <div className="flex-1 min-w-0 w-full">
-                            <h5 className="font-medium text-gray-900 break-words">{activity.name}</h5>
-                            {activity.description && (
-                              <p className="text-sm text-gray-600 mt-1 break-words">{activity.description}</p>
-                            )}
-                            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-600 mt-1">
-                              <span className="whitespace-nowrap">{activity.duration}</span>
-                              <span className="text-green-600 font-medium whitespace-nowrap">{activity.cost}</span>
-                              {activity.location && <span className="break-words">📍 {activity.location}</span>}
-                            </div>
-                            {activity.tips && (
-                              <p className="text-xs text-blue-600 mt-1 break-words">💡 {activity.tips}</p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Meals & Budget */}
-                  <div className="space-y-6">
-                    <div>
-                      <h4 className="text-lg font-semibold mb-4 flex items-center space-x-2">
-                        <span>🍽️</span>
-                        <span>Meal Recommendations</span>
-                      </h4>
-                      <div className="space-y-3">
-                        {day.meals?.map((meal: any, idx: number) => (
-                          <div key={idx} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 p-3 bg-orange-50 rounded-lg min-w-0">
-                            <div className="flex-1 min-w-0">
-                              <h5 className="font-medium text-gray-900 break-words">{meal.meal}</h5>
-                              <p className="text-sm text-gray-600 break-words">
-                                {meal.restaurant || meal.suggestion}
-                                {meal.cuisine && ` • ${meal.cuisine}`}
-                              </p>
-                              {meal.description && (
-                                <p className="text-xs text-gray-500 mt-1 break-words">{meal.description}</p>
-                              )}
-                            </div>
-                            <span className="text-green-600 font-medium whitespace-nowrap">{meal.cost}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="p-4 bg-green-50 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-gray-900">Estimated Daily Cost</span>
-                        <span className="text-xl font-bold text-green-600">{day.estimatedCost}</span>
-                      </div>
-                    </div>
-
-                    {day.transportation && (
-                      <div className="p-4 bg-blue-50 rounded-lg min-w-0">
-                        <h5 className="font-medium text-gray-900 mb-2">Transportation</h5>
-                        <p className="text-sm text-gray-600 break-words">{day.transportation}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <React.Fragment key={day.day}>
+              <DayCard 
+                day={day} 
+                refCallback={(el) => daysRef.current[index] = el}
+              />
+              
+              {/* Ad Unit after every 2 days */}
+              {(index + 1) % 2 === 0 && index !== itinerary.days.length - 1 && (
+                <AdUnit slot="2562007787" className="my-4" />
+              )}
+            </React.Fragment>
           ))}
         </div>
 
@@ -566,6 +428,9 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
             )}
           </div>
         )}
+
+        {/* Ad Unit after additional information */}
+        <AdUnit slot="7718680286" />
 
         {/* CTA Section */}
         <Card ref={ctaRef} className="shadow-lg border-0 mt-12 bg-gradient-to-r from-blue-600 to-orange-600">
