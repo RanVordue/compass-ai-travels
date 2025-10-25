@@ -10,6 +10,7 @@ import LoginModal from "./LoginModal";
 import { supabase } from "@/integrations/supabase/client";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { AdUnit } from "@/components/AdUnit";
 
 interface ItineraryDisplayProps {
   travelData: any;
@@ -354,99 +355,16 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
         {/* Daily Itinerary */}
         <div className="space-y-8">
           {itinerary.days?.map((day: any, index: number) => (
-            <Card key={day.day} ref={(el) => daysRef.current[index] = el} className="shadow-lg border-0 overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-blue-600 to-orange-600 text-white">
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                      <span className="font-bold text-lg">{day.day}</span>
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold">Day {day.day}</h3>
-                      <p className="text-blue-100">{day.date}</p>
-                    </div>
-                  </div>
-                  <Badge variant="secondary" className="bg-white/20 text-white border-0">
-                    {day.theme}
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="grid lg:grid-cols-2 gap-8">
-                  {/* Activities */}
-                  <div>
-                    <h4 className="text-lg font-semibold mb-4 flex items-center space-x-2">
-                      <Clock className="w-5 h-5 text-blue-600" />
-                      <span>Daily Schedule</span>
-                    </h4>
-                    <div className="space-y-4">
-                      {day.activities?.map((activity: any, idx: number) => (
-                        <div key={idx} className="flex flex-col sm:flex-row items-start space-y-2 sm:space-y-0 sm:space-x-3 p-3 bg-gray-50 rounded-lg">
-                          <div className="text-sm text-gray-600 font-medium sm:min-w-[80px] whitespace-nowrap">
-                            {activity.time}
-                          </div>
-                          <div className="flex-1 min-w-0 w-full">
-                            <h5 className="font-medium text-gray-900 break-words">{activity.name}</h5>
-                            {activity.description && (
-                              <p className="text-sm text-gray-600 mt-1 break-words">{activity.description}</p>
-                            )}
-                            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-600 mt-1">
-                              <span className="whitespace-nowrap">{activity.duration}</span>
-                              <span className="text-green-600 font-medium whitespace-nowrap">{activity.cost}</span>
-                              {activity.location && <span className="break-words">📍 {activity.location}</span>}
-                            </div>
-                            {activity.tips && (
-                              <p className="text-xs text-blue-600 mt-1 break-words">💡 {activity.tips}</p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Meals & Budget */}
-                  <div className="space-y-6">
-                    <div>
-                      <h4 className="text-lg font-semibold mb-4 flex items-center space-x-2">
-                        <span>🍽️</span>
-                        <span>Meal Recommendations</span>
-                      </h4>
-                      <div className="space-y-3">
-                        {day.meals?.map((meal: any, idx: number) => (
-                          <div key={idx} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 p-3 bg-orange-50 rounded-lg min-w-0">
-                            <div className="flex-1 min-w-0">
-                              <h5 className="font-medium text-gray-900 break-words">{meal.meal}</h5>
-                              <p className="text-sm text-gray-600 break-words">
-                                {meal.restaurant || meal.suggestion}
-                                {meal.cuisine && ` • ${meal.cuisine}`}
-                              </p>
-                              {meal.description && (
-                                <p className="text-xs text-gray-500 mt-1 break-words">{meal.description}</p>
-                              )}
-                            </div>
-                            <span className="text-green-600 font-medium whitespace-nowrap">{meal.cost}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="p-4 bg-green-50 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-gray-900">Estimated Daily Cost</span>
-                        <span className="text-xl font-bold text-green-600">{day.estimatedCost}</span>
-                      </div>
-                    </div>
-
-                    {day.transportation && (
-                      <div className="p-4 bg-blue-50 rounded-lg min-w-0">
-                        <h5 className="font-medium text-gray-900 mb-2">Transportation</h5>
-                        <p className="text-sm text-gray-600 break-words">{day.transportation}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <React.Fragment key={day.day}>
+              <Card ref={(el) => daysRef.current[index] = el} className="shadow-lg border-0 overflow-hidden">
+...
+              </Card>
+              
+              {/* Ad Unit after every 2 days */}
+              {(index + 1) % 2 === 0 && index !== itinerary.days.length - 1 && (
+                <AdUnit slot="9876543210" className="my-4" />
+              )}
+            </React.Fragment>
           ))}
         </div>
 
@@ -508,6 +426,9 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
             )}
           </div>
         )}
+
+        {/* Ad Unit after additional information */}
+        <AdUnit slot="5555555555" />
 
         {/* CTA Section */}
         <Card ref={ctaRef} className="shadow-lg border-0 mt-12 bg-gradient-to-r from-blue-600 to-orange-600">
