@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MapPin, Clock, DollarSign, Calendar, Download, Edit, AlertCircle, Save } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, DollarSign, Calendar, Download, Edit, AlertCircle, Save, ExternalLink } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { AdUnit } from "@/components/AdUnit";
+import { DayCard } from "@/components/DayCard";
 
 interface ItineraryDisplayProps {
   travelData: any;
@@ -356,9 +357,10 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
         <div className="space-y-8">
           {itinerary.days?.map((day: any, index: number) => (
             <React.Fragment key={day.day}>
-              <Card ref={(el) => daysRef.current[index] = el} className="shadow-lg border-0 overflow-hidden">
-...
-              </Card>
+              <DayCard 
+                day={day} 
+                refCallback={(el) => daysRef.current[index] = el}
+              />
               
               {/* Ad Unit after every 2 days */}
               {(index + 1) % 2 === 0 && index !== itinerary.days.length - 1 && (
