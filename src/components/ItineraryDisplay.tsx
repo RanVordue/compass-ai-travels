@@ -428,7 +428,7 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
         )}
 
         {/* Ad Unit after additional information */}
-        <AdUnit slot="5555555555" />
+        <AdUnit slot="7718680286" />
 
         {/* CTA Section */}
         <Card ref={ctaRef} className="shadow-lg border-0 mt-12 bg-gradient-to-r from-blue-600 to-orange-600">
