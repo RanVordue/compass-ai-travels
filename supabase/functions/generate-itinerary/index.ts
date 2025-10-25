@@ -73,14 +73,15 @@ Travel Style: ${travelData.pace}
 Accommodation: ${travelData.accommodation}
 
 Please create a comprehensive day-by-day itinerary that includes:
-1. Daily activities with specific times and durations
-2. Restaurant recommendations for breakfast, lunch, and dinner
-3. Estimated costs for each activity and meal
-4. Transportation suggestions between locations
-5. Cultural insights and local tips
-6. Weather considerations
-7. Budget breakdown per day
-8. IMPORTANT: Booking/info links for EVERY activity, accommodation, and meal
+1. Accommodation recommendations based on the specified preference (${travelData.accommodation})
+2. Daily activities with specific times and durations
+3. Restaurant recommendations for breakfast, lunch, and dinner
+4. Estimated costs for each activity and meal
+5. Transportation suggestions between locations
+6. Cultural insights and local tips
+7. Weather considerations
+8. Budget breakdown per day
+9. IMPORTANT: Booking/info links for EVERY activity, accommodation, and meal
 
 For each activity and meal, you MUST include a "link" field:
 - For hotels/accommodation: Use Booking.com search URL format: https://www.booking.com/searchresults.html?ss=HOTEL_NAME+CITY&affiliate_id=AFFILIATE_TAG
@@ -95,6 +96,17 @@ Format the response as a JSON object with the following structure:
   "totalBudget": "estimated total budget range",
   "summary": "brief overview of the trip",
   "accommodationLink": "booking.com link for hotels in destination",
+  "accommodations": [
+    {
+      "name": "accommodation name",
+      "type": "hotel/airbnb/hostel/boutique/etc",
+      "location": "neighborhood or area",
+      "priceRange": "nightly rate range",
+      "description": "why this is recommended for this trip",
+      "amenities": ["key amenities"],
+      "bookingTip": "helpful booking information"
+    }
+  ],
   "days": [
     {
       "day": 1,
