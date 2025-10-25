@@ -84,9 +84,11 @@ const SubscriptionStatus = () => {
               </CardDescription>
             </div>
           </div>
-          <Badge variant={isPremium ? "default" : "secondary"} className={`${isPremium ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : ''}`}>
-            {tier}
-          </Badge>
+          {isPremium && (
+            <Badge variant="default" className="bg-yellow-100 text-yellow-800 border-yellow-200">
+              {tier}
+            </Badge>
+          )}
         </div>
       </CardHeader>
       
