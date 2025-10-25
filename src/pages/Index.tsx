@@ -8,7 +8,6 @@ import ItineraryDisplay from '@/components/ItineraryDisplay';
 import Header from '@/components/Header';
 import SubscriptionStatus from '@/components/SubscriptionStatus';
 import { useAuth } from '@/contexts/AuthContext';
-import { AdUnit } from '@/components/AdUnit';
 
 const Index = () => {
   const [currentStep, setCurrentStep] = useState<'welcome' | 'questionnaire' | 'itinerary'>('welcome');
@@ -166,11 +165,6 @@ const Index = () => {
             <span className="text-gray-700">Group preferences</span>
           </div>
         </div>
-      </div>
-
-      {/* Ad Unit 1 - Between Features and CTA */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <AdUnit slot="8197477842" />
       </div>
 
       {/* CTA Section */}
