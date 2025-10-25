@@ -325,6 +325,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
                       type="date"
                       value={formData.startDate}
                       onChange={(e) => handleInputChange('startDate', e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
                       className="mt-2 text-lg p-4"
                     />
                   </div>
@@ -337,6 +338,7 @@ const TravelQuestionnaire: React.FC<TravelQuestionnaireProps> = ({ onComplete, o
                       type="date"
                       value={formData.endDate}
                       onChange={(e) => handleInputChange('endDate', e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
                       className="mt-2 text-lg p-4"
                     />
                   </div>
