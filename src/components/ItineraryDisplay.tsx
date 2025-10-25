@@ -26,6 +26,7 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
   const { toast } = useToast();
   const { user, loading } = useAuth();
   const headerRef = useRef<HTMLDivElement>(null);
+  const accommodationsRef = useRef<HTMLDivElement>(null);
   const daysRef = useRef<(HTMLDivElement | null)[]>([]);
   const additionalRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
@@ -98,6 +99,7 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
       // Collect sections, excluding the top button header
       const sections = [
         headerRef.current,
+        accommodationsRef.current,
         ...daysRef.current,
         additionalRef.current,
         ctaRef.current
@@ -350,6 +352,62 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
             </div>
           </CardContent>
         </Card>
+
+        {/* Accommodation Recommendations */}
+        {itinerary.accommodations && itinerary.accommodations.length > 0 && (
+          <Card ref={accommodationsRef} className="shadow-lg border-0 mb-8">
+            <CardHeader>
+              <CardTitle className="text-2xl flex items-center space-x-2">
+                <span>🏨</span>
+                <span>Recommended Accommodations</span>
+              </CardTitle>
+              <CardDescription>
+                Handpicked stays based on your {travelData.accommodation} preference
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-6">
+                {itinerary.accommodations.map((accommodation: any, index: number) => (
+                  <div key={index} className="p-4 bg-gradient-to-br from-blue-50 to-orange-50 rounded-lg border border-gray-200">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-lg text-gray-900 break-words">{accommodation.name}</h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary" className="text-xs">
+                            {accommodation.type}
+                          </Badge>
+                          <span className="text-sm text-gray-600">📍 {accommodation.location}</span>
+                        </div>
+                      </div>
+                      <div className="text-right ml-2">
+                        <p className="text-lg font-bold text-green-600 whitespace-nowrap">{accommodation.priceRange}</p>
+                        <p className="text-xs text-gray-500">per night</p>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-700 mb-3 break-words">{accommodation.description}</p>
+                    {accommodation.amenities && accommodation.amenities.length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-xs font-medium text-gray-600 mb-1">Amenities:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {accommodation.amenities.map((amenity: string, idx: number) => (
+                            <span key={idx} className="text-xs bg-white px-2 py-1 rounded-full text-gray-600">
+                              {amenity}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {accommodation.bookingTip && (
+                      <div className="mt-3 p-2 bg-blue-100 rounded text-xs text-blue-800 break-words">
+                        💡 <strong>Tip:</strong> {accommodation.bookingTip}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Daily Itinerary */}
         <div className="space-y-8">
