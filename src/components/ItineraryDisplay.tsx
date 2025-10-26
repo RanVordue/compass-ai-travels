@@ -500,10 +500,10 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ travelData, onBack 
               Your personalized itinerary is ready! Download it, share it with travel companions, or make adjustments to fit your style.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button onClick={downloadPDF} size="lg" className="bg-white text-blue-600 hover:bg-gray-50">
+              <Button onClick={downloadPDF} size="lg" className="border-white bg-white text-blue-600 hover:bg-gray/50">
                 Download Full Itinerary
               </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+              <Button size="lg" variant="outline" className="border-white bg-white text-blue-60 hover:bg-white/10">
                 Plan Another Trip
               </Button>
             </div>
